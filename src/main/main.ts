@@ -3,7 +3,8 @@ import path from 'path';
 import { initDatabase, insertPhoto, getAllPhotos, toggleFavorite as dbToggleFavorite, clearAllPhotos } from './database';
 import { scanDirectory, getWeekNumber } from './scanner';
 import { generateThumbnails } from './thumbnail';
-import type { Photo } from '../shared/types';
+import { exportFavorites, validateExportConfig, checkExportConflicts } from './exporter';
+import type { Photo, ExportConfig, Week } from '../shared/types';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -208,7 +209,49 @@ ipcMain.handle('toggle-favorite', async (_event, photoId: number) => {
   }
 });
 
-ipcMain.handle('export-favorites', async (_event, _config: any) => {
-  // TODO: Implement export in Phase 2
-  return { success: true };
+ipcMain.handle('select-export-directory', async () => {
+  if (!mainWindow) return null;
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openDirectory', 'createDirectory'],
+    title: 'Select Export Destination',
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return null;
+  }
+
+  return result.filePaths[0];
+});
+
+ipcMain.handle('validate-export-config', async (_event, config: ExportConfig) => {
+  return validateExportConfig(config);
+});
+
+ipcMain.handle('check-export-conflicts', async (_event, weeks: Week[], config: ExportConfig) => {
+  return checkExportConflicts(weeks, config);
+});
+
+ipcMain.handle('export-favorites', async (_event, weeks: Week[], config: ExportConfig) => {
+  try {
+    if (!mainWindow) {
+      throw new Error('Main window not available');
+    }
+
+    // Validate configuration
+    const errors = validateExportConfig(config);
+    if (errors.length > 0) {
+      throw new Error(`Invalid export configuration: ${errors.join(', ')}`);
+    }
+
+    // Export favorites with progress callback
+    const result = await exportFavorites(weeks, config, (progress) => {
+      mainWindow?.webContents.send('export-progress', progress);
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error exporting favorites:', error);
+    throw error;
+  }
 });

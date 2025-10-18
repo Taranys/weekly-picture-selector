@@ -57,6 +57,24 @@ export interface ExportResult {
   errors: string[];
   exportPath: string;
   timestamp: Date;
+  folders: ExportFolder[];
+}
+
+export interface ExportFolder {
+  folderName: string;
+  weekNumber: number;
+  year: number;
+  photoCount: number;
+  files: string[];
+}
+
+export interface ExportProgress {
+  phase: 'preparing' | 'copying' | 'complete' | 'error';
+  currentFile: string;
+  processed: number;
+  total: number;
+  percentage: number;
+  currentFolder?: string;
 }
 
 export interface ScanProgress {

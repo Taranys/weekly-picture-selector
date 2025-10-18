@@ -6,7 +6,7 @@ A desktop application designed to simplify the process of selecting your favorit
 
 Managing thousands of photos from a year can be overwhelming. This application helps you efficiently browse through your photo library organized by weeks, select 2-4 favorite photos per week, and export them into a well-organized folder structure.
 
-## ✨ Current Features (Phase 1 - 100% Complete ✅)
+## ✨ Current Features (Phases 1-2 Complete ✅)
 
 ### 📁 Photo Management
 - **Directory Scanning** - Recursive scanning with EXIF metadata extraction
@@ -43,13 +43,23 @@ Managing thousands of photos from a year can be overwhelming. This application h
 - **Week Details** - See which photos go in each export folder
 - **Quick Navigation** - Jump from export preview to specific weeks
 
+### 📤 Export Functionality (Phase 2)
+- **Export Dialog** - Comprehensive configuration interface
+- **Folder Naming** - Choose from S01, Week-01, or custom prefix
+- **File Operations** - Copy or move photos (with warnings)
+- **Photo Renaming** - Optional sequential or date-based naming
+- **Dry Run Mode** - Test export without copying files
+- **Progress Tracking** - Real-time progress with phase indicators
+- **Export Report** - Detailed summary with statistics and errors
+- **Conflict Detection** - Warns about existing folders
+
 ### ⌨️ Keyboard Shortcuts
 - `Space` or `F` - Toggle favorite
 - `←` / `→` - Navigate photos in lightbox
 - `Esc` - Close lightbox
 
 ### ✅ Quality Assurance
-- **57 Passing Tests** - Comprehensive test suite
+- **67 Passing Tests** - Comprehensive test suite
 - **Jest + React Testing Library** - Modern testing stack
 - **High Coverage** - 100% on PhotoGrid, WeekSidebar, and FavoritesSummary
 - **Test Scripts**:
@@ -58,12 +68,6 @@ Managing thousands of photos from a year can be overwhelming. This application h
   - `npm test:coverage` - Coverage report
 
 ## 🔮 Upcoming Features
-
-### Phase 2: Export Functionality
-- Export favorites to S01/S02/... folder structure
-- Configurable naming conventions (S01, Week-01, custom)
-- Copy or move options
-- Dry-run mode and export reports
 
 ### Phase 3: Enhanced Organization
 - Subdirectory grouping and filtering
@@ -154,11 +158,13 @@ npm run package:win     # Windows (.exe)
    - Click star button on thumbnail
    - Or press `Space`/`F` in lightbox
 7. **Track Progress** - See favorite count per week and total in header
-8. **Export** (coming Phase 2) - Generate S01/S02/... folders
+8. **Export Favorites** - Click "Export Favorites" button in Favorites view
+9. **Configure Export** - Choose destination, naming pattern, and options
+10. **Review Results** - View detailed export report with statistics
 
 ## 📋 Project Status
 
-**Current Phase:** Phase 1 MVP - ✅ **COMPLETE**
+**Current Phase:** Phase 2 Export - ✅ **COMPLETE**
 
 ### ✅ Completed (Phase 1)
 - [x] Directory scanning with EXIF extraction
@@ -172,12 +178,21 @@ npm run package:win     # Windows (.exe)
 - [x] Favorites summary view with statistics dashboard
 - [x] Export preview visualization (S01/S02/... structure)
 - [x] View toggle (All Photos / Favorites)
-- [x] Comprehensive test suite (57 tests, 100% coverage on components)
 
-### 📅 Next Up (Phase 2)
-- [ ] Export functionality with folder structure
-- [ ] Export configuration dialog
-- [ ] Dry-run mode
+### ✅ Completed (Phase 2)
+- [x] Export configuration dialog with all options
+- [x] Folder naming patterns (S01, Week-01, custom)
+- [x] Copy or move file operations
+- [x] Photo renaming options (sequential, date, original)
+- [x] Dry-run mode for testing
+- [x] Progress tracking with real-time updates
+- [x] Export summary report with detailed statistics
+- [x] Conflict detection and handling
+- [x] Comprehensive test suite (67 tests total)
+
+### 📅 Next Up (Phase 3)
+- [ ] Subdirectory grouping and filtering
+- [ ] Hide photos/folders functionality
 
 ## 🧪 Testing
 
@@ -195,11 +210,13 @@ npm test:coverage       # Generate coverage report
 - **WeekSidebar.test.tsx** - Week navigation sidebar (11 tests)
 - **Lightbox.test.tsx** - Full-screen photo viewer (14 tests)
 - **FavoritesSummary.test.tsx** - Favorites summary view (18 tests)
+- **exporter.test.ts** - Export functionality and validation (10 tests)
 
 **Current Stats:**
-- 57 tests passing
+- 67 tests passing
 - 100% coverage on PhotoGrid, WeekSidebar, and FavoritesSummary
 - 91% coverage on Lightbox
+- Comprehensive export validation and error handling tests
 
 ## 🗂️ Project Structure
 

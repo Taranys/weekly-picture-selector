@@ -1,5 +1,7 @@
-import React, { useMemo } from 'react';
-import type { Week, Photo } from '../../shared/types';
+import React, { useMemo, useState } from 'react';
+import type { Week, Photo, ExportResult } from '../../shared/types';
+import { ExportConfigDialog } from './ExportConfigDialog';
+import { ExportResultDialog } from './ExportResultDialog';
 
 interface FavoritesSummaryProps {
   weeks: Week[];
@@ -14,6 +16,8 @@ export function FavoritesSummary({
   onToggleFavorite,
   onWeekClick,
 }: FavoritesSummaryProps) {
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportResult, setExportResult] = useState<ExportResult | null>(null);
   // Calculate statistics
   const stats = useMemo(() => {
     const totalWeeks = weeks.length;
@@ -77,7 +81,18 @@ export function FavoritesSummary({
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Statistics Dashboard */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Favorites Summary</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Favorites Summary</h2>
+            <button
+              onClick={() => setShowExportDialog(true)}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center space-x-2 shadow-md"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Export Favorites</span>
+            </button>
+          </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div className="bg-blue-50 rounded-lg p-4">
@@ -244,6 +259,26 @@ export function FavoritesSummary({
           </div>
         )}
       </div>
+
+      {/* Export Configuration Dialog */}
+      {showExportDialog && (
+        <ExportConfigDialog
+          weeks={weeks}
+          onClose={() => setShowExportDialog(false)}
+          onExportComplete={(result) => {
+            setShowExportDialog(false);
+            setExportResult(result);
+          }}
+        />
+      )}
+
+      {/* Export Result Dialog */}
+      {exportResult && (
+        <ExportResultDialog
+          result={exportResult}
+          onClose={() => setExportResult(null)}
+        />
+      )}
     </div>
   );
 }
