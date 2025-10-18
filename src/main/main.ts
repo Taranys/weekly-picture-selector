@@ -57,7 +57,7 @@ ipcMain.handle('select-directory', async () => {
   return null;
 });
 
-ipcMain.handle('scan-photos', async (event, directoryPath: string) => {
+ipcMain.handle('scan-photos', async (_event, _directoryPath: string) => {
   // TODO: Implement photo scanning
   return [];
 });
@@ -67,12 +67,12 @@ ipcMain.handle('get-photos', async () => {
   return [];
 });
 
-ipcMain.handle('toggle-favorite', async (event, photoId: number) => {
+ipcMain.handle('toggle-favorite', async (_event, _photoId: number) => {
   // TODO: Implement toggle favorite
   return true;
 });
 
-ipcMain.handle('export-favorites', async (event, config: any) => {
+ipcMain.handle('export-favorites', async (_event, _config: any) => {
   // TODO: Implement export
   return { success: true };
 });

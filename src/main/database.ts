@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import { app } from 'electron';
-import type { Photo, ExifData } from '../shared/types';
+import type { Photo } from '../shared/types';
 
 let db: Database.Database | null = null;
 
