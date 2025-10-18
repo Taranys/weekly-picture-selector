@@ -15,7 +15,10 @@ export function Lightbox({ photo, onClose, onNext, onPrevious, onToggleFavorite 
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowRight' && onNext) onNext();
       if (e.key === 'ArrowLeft' && onPrevious) onPrevious();
-      if (e.key === 'f' || e.key === 'F') onToggleFavorite(photo.id);
+      if (e.key === 'f' || e.key === 'F' || e.key === ' ') {
+        e.preventDefault(); // Prevent page scroll on spacebar
+        onToggleFavorite(photo.id);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -159,6 +162,7 @@ export function Lightbox({ photo, onClose, onNext, onPrevious, onToggleFavorite 
         <div className="text-center text-gray-400 text-sm mt-2">
           <kbd className="px-2 py-1 bg-white/10 rounded">←</kbd> Previous •{' '}
           <kbd className="px-2 py-1 bg-white/10 rounded">→</kbd> Next •{' '}
+          <kbd className="px-2 py-1 bg-white/10 rounded">Space</kbd> or{' '}
           <kbd className="px-2 py-1 bg-white/10 rounded">F</kbd> Favorite •{' '}
           <kbd className="px-2 py-1 bg-white/10 rounded">Esc</kbd> Close
         </div>

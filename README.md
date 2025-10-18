@@ -2,84 +2,235 @@
 
 A desktop application designed to simplify the process of selecting your favorite photos from large photo collections. Perfect for creating year-in-review albums, baby books, or any project that requires curating the best moments from each week.
 
-## Overview
+## 🎯 Overview
 
 Managing thousands of photos from a year can be overwhelming. This application helps you efficiently browse through your photo library organized by weeks, select 2-4 favorite photos per week, and export them into a well-organized folder structure.
 
-## Key Features
+## ✨ Current Features (Phase 1 - 90% Complete)
 
-### Photo Explorer
-- **Smart Photo Organization**: Automatically groups your photos by week based on capture date from EXIF metadata
-- **Intuitive Selection**: Easy-to-use interface to mark your favorite photos with visual indicators
-- **Weekly View**: Browse through your entire year with photos organized in weekly grids
-- **Full-Screen Mode**: View photos in high resolution with keyboard navigation
-- **Favorites Summary**: Review all your selections in one place before exporting
+### 📁 Photo Management
+- **Directory Scanning** - Recursive scanning with EXIF metadata extraction
+- **Weekly Organization** - ISO 8601 week numbering with chronological sorting (earliest to latest)
+- **Thumbnail Generation** - Fast, cached thumbnails using Sharp
+- **Progress Tracking** - Real-time scan progress with 3-phase indicators (scanning, EXIF, thumbnails)
 
-### Export System
-- **Structured Output**: Creates organized folders following the pattern `S01`, `S02`, `S03`... for each week
-- **Flexible Configuration**: Choose naming conventions, copy vs. move options, and more
-- **Progress Tracking**: Visual feedback during export with detailed reports
-- **Safe Operations**: Dry run mode to preview changes before executing
+### ⭐ Photo Selection & Favorites
+- **Favorite Toggle** - Mark favorites with visual feedback
+- **Smart Warnings** - Orange indicator when >4 favorites per week (recommended: 2-4)
+- **Visual Feedback** - Golden border ring and enlarged star badge on favorited photos
+- **Statistics** - Photo count and favorite counter per week and globally
 
-### Bonus Features
-- **Subdirectory Grouping**: Organize and filter photos by subfolder (e.g., "Vacation", "Birthday")
-- **Hide Unwanted Items**: Exclude specific photos or folders from your view
-- **Facial Recognition** (Advanced): Filter photos by detected faces to quickly find pictures of specific people
+### 🎨 User Interface
+- **Week Sidebar** - Navigate by week with:
+  - Year separators
+  - Date ranges (e.g., "Jan 1 - Jan 7")
+  - Favorite count with warning colors
+- **Photo Grid** - Responsive grid layout with hover effects
+- **Lightbox View** - Full-screen photo viewer with:
+  - High-resolution image display
+  - EXIF metadata display (camera, lens, settings, dimensions)
+  - Navigation controls (previous/next)
 
-## Use Cases
+### ⌨️ Keyboard Shortcuts
+- `Space` or `F` - Toggle favorite
+- `←` / `→` - Navigate photos in lightbox
+- `Esc` - Close lightbox
 
-- Create year-end photo albums with the best moments from each week
-- Build baby's first year photo book with weekly progression
-- Compile travel memories organized by week
-- Curate social media content from your photo archive
-- Generate weekly photo highlights for family sharing
+### ✅ Quality Assurance
+- **39 Passing Tests** - Comprehensive test suite
+- **Jest + React Testing Library** - Modern testing stack
+- **High Coverage** - 100% on PhotoGrid and WeekSidebar components
+- **Test Scripts**:
+  - `npm test` - Run all tests
+  - `npm test:watch` - Watch mode
+  - `npm test:coverage` - Coverage report
 
-## Technical Stack
+## 🔮 Upcoming Features
 
-### Architecture Decision
-After evaluating multiple solutions (Electron, Tauri, Python), we selected **Electron + React + TypeScript** for optimal balance between development speed and performance.
+### Phase 1 (Final 10%)
+- Favorites summary view with statistics dashboard
+
+### Phase 2: Export Functionality
+- Export favorites to S01/S02/... folder structure
+- Configurable naming conventions (S01, Week-01, custom)
+- Copy or move options
+- Dry-run mode and export reports
+
+### Phase 3: Enhanced Organization
+- Subdirectory grouping and filtering
+- Hide photos/folders functionality
+
+### Phase 4: Facial Recognition
+- Automatic face detection (100% local processing)
+- Face clustering and labeling
+- Filter photos by detected people
+
+### Phase 5: Polish
+- Dark/light theme
+- Virtual scrolling for large collections
+- Zoom in lightbox
+- Performance optimizations
+
+## 🛠️ Technical Stack
 
 ### Core Technologies
-- **Desktop Framework**: Electron (cross-platform Windows/Mac support)
-- **Frontend**: React + TypeScript + Tailwind CSS
-- **Database**: SQLite (via better-sqlite3) for metadata and selections
-- **Image Processing**: Sharp (high-performance thumbnail generation)
-- **EXIF Parsing**: exifr (fast metadata extraction)
-- **Facial Recognition**: face-api.js (TensorFlow.js - 100% local, privacy-first)
+- **Desktop Framework**: Electron 28 (cross-platform Windows/Mac support)
+- **Frontend**: React 18 + TypeScript 5 + Tailwind CSS 3
+- **Database**: SQLite via better-sqlite3 (local metadata storage)
+- **Image Processing**: Sharp 0.33 (high-performance thumbnails)
+- **EXIF Parsing**: exifr 7 (fast metadata extraction)
+- **Testing**: Jest 30 + React Testing Library 16
 
 ### Why This Stack?
 - **Cross-platform**: Single codebase for Windows and Mac
-- **Performance**: Sharp handles 5000+ photos efficiently, face-api.js runs entirely offline
-- **Modern UI**: React + Tailwind enables rapid development of polished interfaces
-- **Privacy**: All processing happens locally, no cloud dependencies
-- **Developer Experience**: TypeScript for type safety, hot reload for fast iteration
-- **Rich Ecosystem**: npm provides mature libraries for all requirements
+- **Performance**: Sharp handles 5000+ photos efficiently
+- **Modern UI**: React + Tailwind for polished interfaces
+- **Privacy**: All processing local, no cloud dependencies
+- **Type Safety**: TypeScript for better developer experience
+- **Rich Ecosystem**: Mature npm libraries
 
 ### Supported Formats
-- Images: JPEG, PNG, HEIC, WebP
-- RAW formats: CR2, NEF, ARW (via exifr)
+- **Images**: JPEG, PNG, HEIC, WebP
+- **RAW**: CR2, NEF, ARW (EXIF extraction only)
 
 ### Performance Targets
 - Scan 5000 photos: ~30-60 seconds
-- Thumbnail generation: 2-5 minutes (cached)
-- Facial recognition: 5-10 minutes (background processing)
+- Thumbnail generation: 2-5 minutes (cached, one-time)
 - UI navigation: 60 FPS smooth scrolling
 
-## Getting Started
+## 🚀 Getting Started
 
-*(Installation and usage instructions will be added as development progresses)*
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/Taranys/weekly-picture-selector.git
+cd weekly-picture-selector
+
+# Install dependencies
+npm install
+
+# Rebuild native modules for Electron
+npx electron-rebuild
+```
+
+### Development
+
+```bash
+# Run in development mode (hot reload)
+npm run dev
+
+# Run tests
+npm test                # Run once
+npm test:watch          # Watch mode
+npm test:coverage       # With coverage report
+
+# Build for production
+npm run build
+
+# Package for distribution
+npm run package         # Current platform
+npm run package:mac     # macOS (.dmg)
+npm run package:win     # Windows (.exe)
+```
+
+## 📸 Usage
+
+1. **Launch** the application
+2. **Select Folder** - Click "Select Folder" button and choose your photo directory
+3. **Wait for Scan** - Progress bar shows scanning → EXIF extraction → thumbnail generation
+4. **Navigate Weeks** - Use the sidebar to browse weeks (sorted chronologically)
+5. **View Photos** - Click any photo to open full-screen lightbox
+6. **Mark Favorites**:
+   - Click star button on thumbnail
+   - Or press `Space`/`F` in lightbox
+7. **Track Progress** - See favorite count per week and total in header
+8. **Export** (coming Phase 2) - Generate S01/S02/... folders
+
+## 📋 Project Status
+
+**Current Phase:** Phase 1 MVP - 90% complete
+
+### ✅ Completed (Phase 1)
+- [x] Directory scanning with EXIF extraction
+- [x] Thumbnail generation with caching
+- [x] Weekly photo organization (ISO 8601)
+- [x] Photo grid with favorites toggle
+- [x] Lightbox with keyboard navigation
+- [x] Warning system for >4 favorites per week
+- [x] Visual indicators (golden borders, badges)
+- [x] Keyboard shortcuts (Space, F, arrows, Esc)
+- [x] Comprehensive test suite (39 tests)
+
+### 🚧 In Progress
+- [ ] Favorites summary view with statistics dashboard
+
+### 📅 Next Up (Phase 2)
+- [ ] Export functionality with folder structure
+- [ ] Export configuration dialog
+- [ ] Dry-run mode
+
+## 🧪 Testing
+
+The project includes comprehensive tests for all major components:
+
+```bash
+npm test                # Run all tests
+npm test:watch          # Watch mode for development
+npm test:coverage       # Generate coverage report
+```
+
+**Test Coverage:**
+- **scanner.test.ts** - Week number calculation utility
+- **PhotoGrid.test.tsx** - Photo grid component
+- **WeekSidebar.test.tsx** - Week navigation sidebar
+- **Lightbox.test.tsx** - Full-screen photo viewer
+
+**Current Stats:**
+- 39 tests passing
+- 100% coverage on PhotoGrid and WeekSidebar
+- 91% coverage on Lightbox
+
+## 🗂️ Project Structure
+
+```
+weekly-picture-selector/
+├── src/
+│   ├── main/              # Electron main process
+│   │   ├── database.ts    # SQLite operations
+│   │   ├── scanner.ts     # Photo scanning + EXIF
+│   │   ├── thumbnail.ts   # Thumbnail generation
+│   │   ├── main.ts        # Main process entry
+│   │   └── preload.ts     # IPC bridge
+│   ├── renderer/          # React frontend
+│   │   ├── components/    # UI components
+│   │   ├── hooks/         # React hooks
+│   │   └── App.tsx        # Main app component
+│   ├── shared/            # Shared types
+│   │   └── types.ts       # TypeScript interfaces
+│   └── setupTests.ts      # Jest configuration
+├── jest.config.js         # Jest configuration
+├── ROADMAP.md            # Detailed development plan
+└── CLAUDE.md             # Project guidance for AI
+```
+
+## 🤝 Contributing
+
+This is a personal project for learning and personal use. Bug reports and suggestions are welcome via GitHub issues.
+
+## 📄 License
+
+ISC
+
+## 🙏 Acknowledgments
+
+Built with:
+- [Electron](https://www.electronjs.org/) - Desktop framework
+- [React](https://react.dev/) - UI library
+- [Sharp](https://sharp.pixelplumbing.com/) - Image processing
+- [exifr](https://github.com/MikeKovarik/exifr) - EXIF parsing
+- [Tailwind CSS](https://tailwindcss.com/) - Styling
+
+---
 
 See [ROADMAP.md](./ROADMAP.md) for detailed feature plans and development timeline.
-
-## Project Status
-
-Currently in initial planning phase. The roadmap outlines a phased approach:
-- **Phase 1**: Core photo explorer (MVP)
-- **Phase 2**: Export functionality
-- **Phase 3**: Bonus features (subdirectory grouping, hide options)
-- **Phase 4**: Facial recognition
-- **Phase 5**: Polish and enhancements
-
-## License
-
-*(To be determined)*

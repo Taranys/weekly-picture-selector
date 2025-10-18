@@ -58,7 +58,12 @@ export function WeekSidebar({ weeks, selectedWeek, onSelectWeek }: WeekSidebarPr
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600">{week.photos.length}</span>
                     {week.favoriteCount > 0 && (
-                      <span className="flex items-center text-sm text-yellow-600">
+                      <span
+                        className={`flex items-center text-sm ${
+                          week.favoriteCount > 4 ? 'text-orange-600' : 'text-yellow-600'
+                        }`}
+                        title={week.favoriteCount > 4 ? `${week.favoriteCount} favorites (recommended: 2-4)` : undefined}
+                      >
                         <svg
                           className="w-4 h-4"
                           fill="currentColor"
@@ -67,6 +72,21 @@ export function WeekSidebar({ weeks, selectedWeek, onSelectWeek }: WeekSidebarPr
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
                         {week.favoriteCount}
+                        {week.favoriteCount > 4 && (
+                          <svg
+                            className="w-4 h-4 ml-1"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                            />
+                          </svg>
+                        )}
                       </span>
                     )}
                   </div>
