@@ -6,7 +6,7 @@ A desktop application designed to simplify the process of selecting your favorit
 
 Managing thousands of photos from a year can be overwhelming. This application helps you efficiently browse through your photo library organized by weeks, select 2-4 favorite photos per week, and export them into a well-organized folder structure.
 
-## ✨ Current Features (Phase 1 - 90% Complete)
+## ✨ Current Features (Phase 1 - 100% Complete ✅)
 
 ### 📁 Photo Management
 - **Directory Scanning** - Recursive scanning with EXIF metadata extraction
@@ -19,8 +19,10 @@ Managing thousands of photos from a year can be overwhelming. This application h
 - **Smart Warnings** - Orange indicator when >4 favorites per week (recommended: 2-4)
 - **Visual Feedback** - Golden border ring and enlarged star badge on favorited photos
 - **Statistics** - Photo count and favorite counter per week and globally
+- **Favorites Summary** - Dedicated view with statistics dashboard and export preview
 
 ### 🎨 User Interface
+- **View Toggle** - Switch between "All Photos" and "Favorites" view
 - **Week Sidebar** - Navigate by week with:
   - Year separators
   - Date ranges (e.g., "Jan 1 - Jan 7")
@@ -30,6 +32,16 @@ Managing thousands of photos from a year can be overwhelming. This application h
   - High-resolution image display
   - EXIF metadata display (camera, lens, settings, dimensions)
   - Navigation controls (previous/next)
+- **Statistics Dashboard** - Overview of:
+  - Total weeks and favorites
+  - Complete/incomplete weeks
+  - Average favorites per week
+  - Warnings for weeks with >4 favorites
+
+### 📊 Export Preview
+- **Folder Structure** - Preview S01/S02/... folder layout
+- **Week Details** - See which photos go in each export folder
+- **Quick Navigation** - Jump from export preview to specific weeks
 
 ### ⌨️ Keyboard Shortcuts
 - `Space` or `F` - Toggle favorite
@@ -37,18 +49,15 @@ Managing thousands of photos from a year can be overwhelming. This application h
 - `Esc` - Close lightbox
 
 ### ✅ Quality Assurance
-- **39 Passing Tests** - Comprehensive test suite
+- **57 Passing Tests** - Comprehensive test suite
 - **Jest + React Testing Library** - Modern testing stack
-- **High Coverage** - 100% on PhotoGrid and WeekSidebar components
+- **High Coverage** - 100% on PhotoGrid, WeekSidebar, and FavoritesSummary
 - **Test Scripts**:
   - `npm test` - Run all tests
   - `npm test:watch` - Watch mode
   - `npm test:coverage` - Coverage report
 
 ## 🔮 Upcoming Features
-
-### Phase 1 (Final 10%)
-- Favorites summary view with statistics dashboard
 
 ### Phase 2: Export Functionality
 - Export favorites to S01/S02/... folder structure
@@ -149,7 +158,7 @@ npm run package:win     # Windows (.exe)
 
 ## 📋 Project Status
 
-**Current Phase:** Phase 1 MVP - 90% complete
+**Current Phase:** Phase 1 MVP - ✅ **COMPLETE**
 
 ### ✅ Completed (Phase 1)
 - [x] Directory scanning with EXIF extraction
@@ -160,10 +169,10 @@ npm run package:win     # Windows (.exe)
 - [x] Warning system for >4 favorites per week
 - [x] Visual indicators (golden borders, badges)
 - [x] Keyboard shortcuts (Space, F, arrows, Esc)
-- [x] Comprehensive test suite (39 tests)
-
-### 🚧 In Progress
-- [ ] Favorites summary view with statistics dashboard
+- [x] Favorites summary view with statistics dashboard
+- [x] Export preview visualization (S01/S02/... structure)
+- [x] View toggle (All Photos / Favorites)
+- [x] Comprehensive test suite (57 tests, 100% coverage on components)
 
 ### 📅 Next Up (Phase 2)
 - [ ] Export functionality with folder structure
@@ -181,14 +190,15 @@ npm test:coverage       # Generate coverage report
 ```
 
 **Test Coverage:**
-- **scanner.test.ts** - Week number calculation utility
-- **PhotoGrid.test.tsx** - Photo grid component
-- **WeekSidebar.test.tsx** - Week navigation sidebar
-- **Lightbox.test.tsx** - Full-screen photo viewer
+- **scanner.test.ts** - Week number calculation utility (6 tests)
+- **PhotoGrid.test.tsx** - Photo grid component (8 tests)
+- **WeekSidebar.test.tsx** - Week navigation sidebar (11 tests)
+- **Lightbox.test.tsx** - Full-screen photo viewer (14 tests)
+- **FavoritesSummary.test.tsx** - Favorites summary view (18 tests)
 
 **Current Stats:**
-- 39 tests passing
-- 100% coverage on PhotoGrid and WeekSidebar
+- 57 tests passing
+- 100% coverage on PhotoGrid, WeekSidebar, and FavoritesSummary
 - 91% coverage on Lightbox
 
 ## 🗂️ Project Structure

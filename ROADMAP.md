@@ -5,7 +5,7 @@ Application to facilitate the selection of 2-4 favorite photos per week from a y
 
 ---
 
-## Phase 1: Core Photo Explorer (MVP) - 90% Complete
+## Phase 1: Core Photo Explorer (MVP) - ✅ **100% COMPLETE**
 
 ### 1.1 Directory Selection & File System ✅ **COMPLETED**
 **Goal**: Allow users to select and scan a directory for photos
@@ -83,20 +83,23 @@ Application to facilitate the selection of 2-4 favorite photos per week from a y
 
 ---
 
-### 1.5 Favorites Summary View ⏳ **IN PROGRESS** (Final 10% of Phase 1)
+### 1.5 Favorites Summary View ✅ **COMPLETED**
 **Goal**: Review all selected favorites organized by week
 
 **Features**:
-- ⏳ Dedicated "Favorites" tab/view or filter
-- ⏳ Weekly grid showing only favorited photos
-- ⏳ Week navigation (jump to specific week)
-- ⏳ Edit mode: remove favorites or add more
-- ⏳ Statistics dashboard:
+- ✅ Dedicated "Favorites" tab/view with toggle button
+- ✅ Grid showing only favorited photos organized by week
+- ✅ Week navigation (jump from export preview to specific week in All Photos view)
+- ✅ Edit mode: remove favorites directly from summary view
+- ✅ Statistics dashboard:
   - Total weeks with photos
   - Total favorites selected
   - Weeks with 0 favorites (incomplete)
   - Average favorites per week
-- ⏳ Export preview: visualize final output structure (S01/S02/...)
+  - Warning count for weeks with >4 favorites
+- ✅ Export preview: visualize final output structure (S01/S02/...) with photo thumbnails and counts
+- ✅ Empty state with helpful message when no favorites selected
+- ✅ Warning banner for incomplete weeks
 
 ---
 
@@ -351,17 +354,21 @@ Application to facilitate the selection of 2-4 favorite photos per week from a y
 - ✅ App loads in <3 seconds
 
 ## Testing & Quality
-- ✅ **39 unit tests** covering core functionality
-- ✅ **100% coverage** on PhotoGrid and WeekSidebar components
+- ✅ **57 unit tests** covering core functionality
+- ✅ **100% coverage** on PhotoGrid, WeekSidebar, and FavoritesSummary components
 - ✅ **91% coverage** on Lightbox component
 - ✅ **Jest + React Testing Library** for modern testing
 - ✅ Test scripts: `npm test`, `npm test:watch`, `npm test:coverage`
 
 ## Recent Updates (Latest)
-- ✅ Added warning system for >4 favorites per week (orange color + icon)
-- ✅ Added Spacebar keyboard shortcut for toggling favorites
+- ✅ **Phase 1 Complete!** - Favorites Summary View implemented with statistics dashboard
+- ✅ Added view toggle between "All Photos" and "Favorites" modes
+- ✅ Export preview visualization showing S01/S02/... folder structure
+- ✅ Statistics dashboard with 6 metrics (total weeks, favorites, completion, avg, warnings)
+- ✅ Added 18 comprehensive tests for FavoritesSummary component (57 tests total)
+- ✅ Warning system for >4 favorites per week (orange color + icon)
+- ✅ Spacebar keyboard shortcut for toggling favorites
 - ✅ Enhanced visual feedback with golden border ring on favorites
 - ✅ Implemented chronological week sorting (earliest to latest)
 - ✅ Added year separators and date ranges in sidebar
-- ✅ Created comprehensive test suite with 39 passing tests
 - ✅ Fixed local file loading with webSecurity: false
