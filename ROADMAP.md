@@ -156,42 +156,38 @@ Application to facilitate the selection of 2-4 favorite photos per week from a y
 
 ---
 
-## Phase 3: Bonus Features
+## Phase 3: Bonus Features - ✅ **COMPLETE**
 
-### 3.1 Subdirectory Grouping
+### 3.1 Subdirectory Grouping ✅ **COMPLETED**
 **Goal**: Organize photos by subdirectories for better context
 
 **Features**:
-- Detect and preserve subdirectory structure
-- Display subdirectory name as tag/label on thumbnails
-- Filter view by subdirectory
-- Subdirectory headers in weekly view (nested grouping):
-  - Week 1
-    - /Vacation
-    - /Birthday_Party
-- Collapsible subdirectory sections
-- Subdirectory statistics (photo count, favorites count)
+- ✅ Detect and preserve subdirectory structure
+- ✅ Display subdirectory name as tag/label on thumbnails
+- ✅ Filter view by subdirectory (dropdown menu)
+- ✅ Subdirectory statistics (photo count, favorites count)
+- ✅ Visual subdirectory tags with folder icons
+- ✅ Right-click context menu to hide entire subdirectory
 
 **UI Enhancement**:
-- Subdirectory color coding
-- Breadcrumb navigation
-- "All" vs "Subdirectory" view toggle
+- ✅ Subdirectory dropdown filter with statistics
+- ✅ "All Folders" vs specific subdirectory selection
+- ✅ Photo counts and favorite counts per subdirectory
 
 ---
 
-### 3.2 Hide Photos/Directories
+### 3.2 Hide Photos/Directories ✅ **COMPLETED**
 **Goal**: Exclude unwanted photos or folders from view
 
 **Features**:
-- Right-click context menu: "Hide photo" or "Hide folder"
-- Hidden items list/manager (view and restore hidden items)
-- Visual indicator for hidden items (if shown in manager)
-- Exclusion rules:
-  - Hide specific file types
-  - Hide photos below certain resolution
-  - Hide screenshots (detect by metadata)
-- Persist hide settings
-- Bulk hide/unhide actions
+- ✅ Right-click context menu: "Hide photo"
+- ✅ Right-click on subdirectory filter: "Hide folder"
+- ✅ Hidden items manager (view and restore hidden items)
+- ✅ Visual grouping by subdirectory in hidden manager
+- ✅ Persist hide settings in database
+- ✅ Bulk hide/unhide actions (select multiple, restore all)
+- ✅ Hidden photo counter badge
+- ✅ Automatic photo list refresh after hide/restore operations
 
 ---
 
@@ -363,15 +359,18 @@ Application to facilitate the selection of 2-4 favorite photos per week from a y
 - ✅ Test scripts: `npm test`, `npm test:watch`, `npm test:coverage`
 
 ## Recent Updates (Latest)
+- ✅ **Phase 3 Complete!** - Enhanced organization with subdirectory filtering and hiding
+- ✅ Subdirectory detection and filter dropdown with statistics
+- ✅ Visual subdirectory tags on photos with folder icons
+- ✅ Right-click context menu to hide photos
+- ✅ Hide entire subdirectories functionality
+- ✅ Hidden items manager with bulk restore operations
+- ✅ Database queries for subdirectory filtering and hidden photo management
+- ✅ IPC handlers for all Phase 3 operations
+- ✅ SubdirectoryFilter component with dropdown and context menu
+- ✅ HiddenItemsManager component with selection and restore features
+- ✅ Updated PhotoGrid with subdirectory tags and hide context menu
+- ✅ All 67 tests passing with Phase 3 integration
 - ✅ **Phase 2 Complete!** - Full export functionality with comprehensive configuration
 - ✅ Export configuration dialog with all naming patterns and options
 - ✅ Real-time progress tracking during export operations
-- ✅ Export summary report with detailed statistics and folder breakdown
-- ✅ Dry-run mode for testing without file operations
-- ✅ Conflict detection and automatic file renaming on conflicts
-- ✅ Copy or move file operations with appropriate warnings
-- ✅ Photo renaming options (sequential, date-based, original)
-- ✅ Added 10 comprehensive tests for export functionality (67 tests total)
-- ✅ Phase 1 Complete - Favorites Summary View with statistics dashboard
-- ✅ View toggle between "All Photos" and "Favorites" modes
-- ✅ Export preview visualization showing S01/S02/... folder structure

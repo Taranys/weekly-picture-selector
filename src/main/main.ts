@@ -1,6 +1,21 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'path';
-import { initDatabase, insertPhoto, getAllPhotos, toggleFavorite as dbToggleFavorite, clearAllPhotos } from './database';
+import {
+  initDatabase,
+  insertPhoto,
+  getAllPhotos,
+  toggleFavorite as dbToggleFavorite,
+  clearAllPhotos,
+  getUniqueSubdirectories,
+  getPhotosBySubdirectory,
+  getSubdirectoryStats,
+  hidePhoto,
+  unhidePhoto,
+  hidePhotosBySubdirectory,
+  unhidePhotosBySubdirectory,
+  getHiddenPhotos,
+  getHiddenPhotoCount,
+} from './database';
 import { scanDirectory, getWeekNumber } from './scanner';
 import { generateThumbnails } from './thumbnail';
 import { exportFavorites, validateExportConfig, checkExportConflicts } from './exporter';
@@ -253,5 +268,88 @@ ipcMain.handle('export-favorites', async (_event, weeks: Week[], config: ExportC
   } catch (error) {
     console.error('Error exporting favorites:', error);
     throw error;
+  }
+});
+
+// Subdirectory operations
+ipcMain.handle('get-unique-subdirectories', async () => {
+  try {
+    return getUniqueSubdirectories();
+  } catch (error) {
+    console.error('Error getting unique subdirectories:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('get-photos-by-subdirectory', async (_event, subdirectory: string | null) => {
+  try {
+    return getPhotosBySubdirectory(subdirectory);
+  } catch (error) {
+    console.error('Error getting photos by subdirectory:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('get-subdirectory-stats', async () => {
+  try {
+    return getSubdirectoryStats();
+  } catch (error) {
+    console.error('Error getting subdirectory stats:', error);
+    return [];
+  }
+});
+
+// Hide/unhide operations
+ipcMain.handle('hide-photo', async (_event, photoId: number) => {
+  try {
+    return hidePhoto(photoId);
+  } catch (error) {
+    console.error('Error hiding photo:', error);
+    return false;
+  }
+});
+
+ipcMain.handle('unhide-photo', async (_event, photoId: number) => {
+  try {
+    return unhidePhoto(photoId);
+  } catch (error) {
+    console.error('Error unhiding photo:', error);
+    return false;
+  }
+});
+
+ipcMain.handle('hide-photos-by-subdirectory', async (_event, subdirectory: string) => {
+  try {
+    return hidePhotosBySubdirectory(subdirectory);
+  } catch (error) {
+    console.error('Error hiding photos by subdirectory:', error);
+    return 0;
+  }
+});
+
+ipcMain.handle('unhide-photos-by-subdirectory', async (_event, subdirectory: string) => {
+  try {
+    return unhidePhotosBySubdirectory(subdirectory);
+  } catch (error) {
+    console.error('Error unhiding photos by subdirectory:', error);
+    return 0;
+  }
+});
+
+ipcMain.handle('get-hidden-photos', async () => {
+  try {
+    return getHiddenPhotos();
+  } catch (error) {
+    console.error('Error getting hidden photos:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('get-hidden-photo-count', async () => {
+  try {
+    return getHiddenPhotoCount();
+  } catch (error) {
+    console.error('Error getting hidden photo count:', error);
+    return 0;
   }
 });

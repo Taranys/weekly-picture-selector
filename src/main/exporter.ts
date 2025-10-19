@@ -10,7 +10,6 @@ export async function exportFavorites(
   config: ExportConfig,
   progressCallback: (progress: ExportProgress) => void
 ): Promise<ExportResult> {
-  const startTime = Date.now();
   const result: ExportResult = {
     success: false,
     totalFiles: 0,

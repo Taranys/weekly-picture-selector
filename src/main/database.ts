@@ -177,6 +177,145 @@ export function clearAllPhotos() {
   db.exec('DELETE FROM photos');
 }
 
+// Subdirectory operations
+export function getUniqueSubdirectories(): string[] {
+  const db = getDatabase();
+
+  const stmt = db.prepare(`
+    SELECT DISTINCT subdirectory
+    FROM photos
+    WHERE subdirectory IS NOT NULL AND is_hidden = 0
+    ORDER BY subdirectory ASC
+  `);
+
+  const rows = stmt.all() as any[];
+  return rows.map((row) => row.subdirectory);
+}
+
+export function getPhotosBySubdirectory(subdirectory: string | null): Photo[] {
+  const db = getDatabase();
+
+  let stmt;
+  let rows;
+
+  if (subdirectory === null) {
+    stmt = db.prepare(`
+      SELECT * FROM photos
+      WHERE subdirectory IS NULL AND is_hidden = 0
+      ORDER BY capture_date ASC
+    `);
+    rows = stmt.all() as any[];
+  } else {
+    stmt = db.prepare(`
+      SELECT * FROM photos
+      WHERE subdirectory = ? AND is_hidden = 0
+      ORDER BY capture_date ASC
+    `);
+    rows = stmt.all(subdirectory) as any[];
+  }
+
+  return rows.map(rowToPhoto);
+}
+
+export function getSubdirectoryStats(): Array<{ subdirectory: string | null; photoCount: number; favoriteCount: number }> {
+  const db = getDatabase();
+
+  const stmt = db.prepare(`
+    SELECT
+      subdirectory,
+      COUNT(*) as photo_count,
+      SUM(CASE WHEN is_favorite = 1 THEN 1 ELSE 0 END) as favorite_count
+    FROM photos
+    WHERE is_hidden = 0
+    GROUP BY subdirectory
+    ORDER BY subdirectory ASC
+  `);
+
+  const rows = stmt.all() as any[];
+  return rows.map((row) => ({
+    subdirectory: row.subdirectory,
+    photoCount: row.photo_count,
+    favoriteCount: row.favorite_count,
+  }));
+}
+
+// Hide/unhide operations
+export function hidePhoto(photoId: number): boolean {
+  const db = getDatabase();
+
+  const stmt = db.prepare(`
+    UPDATE photos
+    SET is_hidden = 1
+    WHERE id = ?
+  `);
+
+  const info = stmt.run(photoId);
+  return info.changes > 0;
+}
+
+export function unhidePhoto(photoId: number): boolean {
+  const db = getDatabase();
+
+  const stmt = db.prepare(`
+    UPDATE photos
+    SET is_hidden = 0
+    WHERE id = ?
+  `);
+
+  const info = stmt.run(photoId);
+  return info.changes > 0;
+}
+
+export function hidePhotosBySubdirectory(subdirectory: string): number {
+  const db = getDatabase();
+
+  const stmt = db.prepare(`
+    UPDATE photos
+    SET is_hidden = 1
+    WHERE subdirectory = ?
+  `);
+
+  const info = stmt.run(subdirectory);
+  return info.changes;
+}
+
+export function unhidePhotosBySubdirectory(subdirectory: string): number {
+  const db = getDatabase();
+
+  const stmt = db.prepare(`
+    UPDATE photos
+    SET is_hidden = 0
+    WHERE subdirectory = ?
+  `);
+
+  const info = stmt.run(subdirectory);
+  return info.changes;
+}
+
+export function getHiddenPhotos(): Photo[] {
+  const db = getDatabase();
+
+  const stmt = db.prepare(`
+    SELECT * FROM photos
+    WHERE is_hidden = 1
+    ORDER BY subdirectory ASC, capture_date ASC
+  `);
+
+  const rows = stmt.all() as any[];
+  return rows.map(rowToPhoto);
+}
+
+export function getHiddenPhotoCount(): number {
+  const db = getDatabase();
+
+  const stmt = db.prepare(`
+    SELECT COUNT(*) as count FROM photos WHERE is_hidden = 1
+  `);
+
+  const row = stmt.get() as any;
+  return row.count;
+}
+
 // Helper function to convert database row to Photo object
 function rowToPhoto(row: any): Photo {
   return {

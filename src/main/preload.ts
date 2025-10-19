@@ -12,6 +12,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   checkExportConflicts: (weeks: Week[], config: ExportConfig) => ipcRenderer.invoke('check-export-conflicts', weeks, config),
   exportFavorites: (weeks: Week[], config: ExportConfig) => ipcRenderer.invoke('export-favorites', weeks, config),
 
+  // Subdirectory operations
+  getUniqueSubdirectories: () => ipcRenderer.invoke('get-unique-subdirectories'),
+  getPhotosBySubdirectory: (subdirectory: string | null) => ipcRenderer.invoke('get-photos-by-subdirectory', subdirectory),
+  getSubdirectoryStats: () => ipcRenderer.invoke('get-subdirectory-stats'),
+
+  // Hide/unhide operations
+  hidePhoto: (photoId: number) => ipcRenderer.invoke('hide-photo', photoId),
+  unhidePhoto: (photoId: number) => ipcRenderer.invoke('unhide-photo', photoId),
+  hidePhotosBySubdirectory: (subdirectory: string) => ipcRenderer.invoke('hide-photos-by-subdirectory', subdirectory),
+  unhidePhotosBySubdirectory: (subdirectory: string) => ipcRenderer.invoke('unhide-photos-by-subdirectory', subdirectory),
+  getHiddenPhotos: () => ipcRenderer.invoke('get-hidden-photos'),
+  getHiddenPhotoCount: () => ipcRenderer.invoke('get-hidden-photo-count'),
+
   // Event listeners for progress updates
   onScanProgress: (callback: (progress: any) => void) => {
     ipcRenderer.on('scan-progress', (_, progress) => callback(progress));
@@ -33,6 +46,15 @@ declare global {
       validateExportConfig: (config: ExportConfig) => Promise<string[]>;
       checkExportConflicts: (weeks: Week[], config: ExportConfig) => Promise<{ hasConflicts: boolean; conflicts: string[] }>;
       exportFavorites: (weeks: Week[], config: ExportConfig) => Promise<any>;
+      getUniqueSubdirectories: () => Promise<string[]>;
+      getPhotosBySubdirectory: (subdirectory: string | null) => Promise<any[]>;
+      getSubdirectoryStats: () => Promise<Array<{ subdirectory: string | null; photoCount: number; favoriteCount: number }>>;
+      hidePhoto: (photoId: number) => Promise<boolean>;
+      unhidePhoto: (photoId: number) => Promise<boolean>;
+      hidePhotosBySubdirectory: (subdirectory: string) => Promise<number>;
+      unhidePhotosBySubdirectory: (subdirectory: string) => Promise<number>;
+      getHiddenPhotos: () => Promise<any[]>;
+      getHiddenPhotoCount: () => Promise<number>;
       onScanProgress: (callback: (progress: any) => void) => void;
       onExportProgress: (callback: (progress: any) => void) => void;
     };

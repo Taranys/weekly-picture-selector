@@ -1,7 +1,6 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import { exportFavorites, validateExportConfig, checkExportConflicts } from './exporter';
-import type { ExportConfig, Week, Photo, ExportProgress } from '../shared/types';
+import type { ExportConfig, Week, Photo } from '../shared/types';
 
 // Mock fs module
 jest.mock('fs');

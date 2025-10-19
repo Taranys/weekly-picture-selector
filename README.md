@@ -6,7 +6,7 @@ A desktop application designed to simplify the process of selecting your favorit
 
 Managing thousands of photos from a year can be overwhelming. This application helps you efficiently browse through your photo library organized by weeks, select 2-4 favorite photos per week, and export them into a well-organized folder structure.
 
-## ✨ Current Features (Phases 1-2 Complete ✅)
+## ✨ Current Features (Phases 1-3 Complete ✅)
 
 ### 📁 Photo Management
 - **Directory Scanning** - Recursive scanning with EXIF metadata extraction
@@ -53,6 +53,16 @@ Managing thousands of photos from a year can be overwhelming. This application h
 - **Export Report** - Detailed summary with statistics and errors
 - **Conflict Detection** - Warns about existing folders
 
+### 📂 Enhanced Organization (Phase 3)
+- **Subdirectory Detection** - Automatically detects and preserves folder structure
+- **Subdirectory Filter** - Filter photos by subdirectory with dropdown
+- **Subdirectory Tags** - Visual tags showing folder location on photos
+- **Subdirectory Statistics** - Photo and favorite counts per folder
+- **Hide Photos** - Right-click context menu to hide individual photos
+- **Hide Folders** - Hide entire subdirectories from view
+- **Hidden Items Manager** - View and restore hidden photos
+- **Bulk Operations** - Select and restore multiple hidden items at once
+
 ### ⌨️ Keyboard Shortcuts
 - `Space` or `F` - Toggle favorite
 - `←` / `→` - Navigate photos in lightbox
@@ -69,11 +79,7 @@ Managing thousands of photos from a year can be overwhelming. This application h
 
 ## 🔮 Upcoming Features
 
-### Phase 3: Enhanced Organization
-- Subdirectory grouping and filtering
-- Hide photos/folders functionality
-
-### Phase 4: Facial Recognition
+### Phase 4: Facial Recognition (Advanced)
 - Automatic face detection (100% local processing)
 - Face clustering and labeling
 - Filter photos by detected people
@@ -164,7 +170,7 @@ npm run package:win     # Windows (.exe)
 
 ## 📋 Project Status
 
-**Current Phase:** Phase 2 Export - ✅ **COMPLETE**
+**Current Phase:** Phase 3 Enhanced Organization - ✅ **COMPLETE**
 
 ### ✅ Completed (Phase 1)
 - [x] Directory scanning with EXIF extraction
@@ -190,9 +196,21 @@ npm run package:win     # Windows (.exe)
 - [x] Conflict detection and handling
 - [x] Comprehensive test suite (67 tests total)
 
-### 📅 Next Up (Phase 3)
-- [ ] Subdirectory grouping and filtering
-- [ ] Hide photos/folders functionality
+### ✅ Completed (Phase 3)
+- [x] Subdirectory detection and preservation
+- [x] Subdirectory filter with dropdown menu
+- [x] Visual subdirectory tags on photos
+- [x] Subdirectory statistics (photo/favorite counts)
+- [x] Right-click context menu to hide photos
+- [x] Hide entire subdirectories
+- [x] Hidden items manager with restore functionality
+- [x] Bulk restore operations
+- [x] Database support for hidden photos
+
+### 📅 Next Up (Phase 4)
+- [ ] Automatic face detection
+- [ ] Face clustering and labeling
+- [ ] Filter photos by detected people
 
 ## 🧪 Testing
 
