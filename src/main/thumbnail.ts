@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { app } from 'electron';
+import heicConvert from 'heic-convert';
 
 const THUMBNAIL_SIZES = {
   small: 200,
@@ -56,33 +57,49 @@ export async function generateThumbnail(
     // Generate thumbnail
     const targetSize = THUMBNAIL_SIZES[size];
 
-    await sharp(photoPath)
-      .rotate() // Auto-rotate based on EXIF orientation
-      .resize(targetSize, targetSize, {
-        fit: 'cover',
-        position: 'center',
-      })
-      .jpeg({
-        quality: 85,
-        progressive: true,
-      })
-      .toFile(thumbnailPath);
+    // Check if this is a HEIC file
+    const isHeic = photoPath.toLowerCase().endsWith('.heic') || photoPath.toLowerCase().endsWith('.heif');
+
+    if (isHeic) {
+      // Convert HEIC to JPEG buffer first using heic-convert
+      const inputBuffer = fs.readFileSync(photoPath);
+      const jpegBuffer = await heicConvert({
+        buffer: inputBuffer,
+        format: 'JPEG',
+        quality: 0.9,
+      });
+
+      // Then process the JPEG buffer with Sharp
+      await sharp(jpegBuffer)
+        .rotate() // Auto-rotate based on EXIF orientation
+        .resize(targetSize, targetSize, {
+          fit: 'cover',
+          position: 'center',
+        })
+        .jpeg({
+          quality: 85,
+          progressive: true,
+        })
+        .toFile(thumbnailPath);
+    } else {
+      // Process non-HEIC images directly with Sharp
+      await sharp(photoPath)
+        .rotate() // Auto-rotate based on EXIF orientation
+        .resize(targetSize, targetSize, {
+          fit: 'cover',
+          position: 'center',
+        })
+        .jpeg({
+          quality: 85,
+          progressive: true,
+        })
+        .toFile(thumbnailPath);
+    }
 
     return thumbnailPath;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const isHeicError = photoPath.toLowerCase().endsWith('.heic') ||
-                        errorMessage.includes('heif') ||
-                        errorMessage.includes('libheif') ||
-                        errorMessage.includes('compression format');
-
-    if (isHeicError) {
-      console.warn(`⚠️  HEIC file skipped (libheif not fully configured): ${path.basename(photoPath)}`);
-      console.warn(`   To fix: brew install libheif && npm rebuild sharp`);
-    } else {
-      console.error(`❌ Error generating thumbnail for ${path.basename(photoPath)}:`, errorMessage);
-    }
-
+    console.error(`❌ Error generating thumbnail for ${path.basename(photoPath)}:`, errorMessage);
     return null;
   }
 }
@@ -98,8 +115,7 @@ export async function generateThumbnails(
   const results = new Map<string, string>();
   const total = photoPaths.length;
   let processed = 0;
-  let heicSkipped = 0;
-  let otherErrors = 0;
+  let errors = 0;
 
   // Process in batches to avoid memory issues
   const BATCH_SIZE = 10;
@@ -112,11 +128,7 @@ export async function generateThumbnails(
 
       // Track failures
       if (!thumbnailPath) {
-        if (photoPath.toLowerCase().endsWith('.heic')) {
-          heicSkipped++;
-        } else {
-          otherErrors++;
-        }
+        errors++;
       }
 
       return { photoPath, thumbnailPath };
@@ -133,11 +145,8 @@ export async function generateThumbnails(
   // Summary
   console.log(`\n✅ Thumbnail generation complete:`);
   console.log(`   - Success: ${results.size}/${total}`);
-  if (heicSkipped > 0) {
-    console.log(`   - HEIC skipped: ${heicSkipped} (run: brew install libheif && npm rebuild sharp)`);
-  }
-  if (otherErrors > 0) {
-    console.log(`   - Other errors: ${otherErrors}`);
+  if (errors > 0) {
+    console.log(`   - Errors: ${errors}`);
   }
 
   return results;

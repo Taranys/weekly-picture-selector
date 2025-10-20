@@ -78,7 +78,7 @@ export function Lightbox({ photo, onClose, onNext, onPrevious, onToggleFavorite 
       {/* Photo */}
       <div onClick={(e) => e.stopPropagation()} className="max-w-7xl max-h-screen p-4">
         <img
-          src={`file://${photo.path}`}
+          src={`local-image://${encodeURIComponent(photo.path)}`}
           alt={photo.filename}
           className="max-w-full max-h-[85vh] object-contain"
         />

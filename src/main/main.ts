@@ -1,5 +1,7 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, protocol } from 'electron';
 import path from 'path';
+import fs from 'fs';
+import heicConvert from 'heic-convert';
 import {
   initDatabase,
   insertPhoto,
@@ -76,7 +78,65 @@ function createWindow() {
   });
 }
 
+// Register custom protocol to serve images (including HEIC conversion)
 app.whenReady().then(async () => {
+  // Register protocol for serving local images with HEIC support
+  protocol.handle('local-image', async (request) => {
+    try {
+      const url = request.url.replace('local-image://', '');
+      const filePath = decodeURIComponent(url);
+
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        return new Response('File not found', { status: 404 });
+      }
+
+      const ext = path.extname(filePath).toLowerCase();
+      const isHeic = ext === '.heic' || ext === '.heif';
+
+      if (isHeic) {
+        // Convert HEIC to JPEG on-the-fly using heic-convert
+        const inputBuffer = fs.readFileSync(filePath);
+        const outputBuffer = await heicConvert({
+          buffer: inputBuffer,
+          format: 'JPEG',
+          quality: 0.95, // High quality for full-size viewing
+        });
+
+        return new Response(new Uint8Array(outputBuffer), {
+          headers: {
+            'Content-Type': 'image/jpeg',
+            'Cache-Control': 'public, max-age=3600',
+          },
+        });
+      } else {
+        // Serve other image formats directly
+        const buffer = fs.readFileSync(filePath);
+        const mimeTypes: { [key: string]: string } = {
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.png': 'image/png',
+          '.gif': 'image/gif',
+          '.webp': 'image/webp',
+          '.bmp': 'image/bmp',
+          '.tiff': 'image/tiff',
+          '.tif': 'image/tiff',
+        };
+        const mimeType = mimeTypes[ext] || 'application/octet-stream';
+
+        return new Response(new Uint8Array(buffer), {
+          headers: {
+            'Content-Type': mimeType,
+            'Cache-Control': 'public, max-age=3600',
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error serving image:', error);
+      return new Response('Error loading image', { status: 500 });
+    }
+  });
+
   // Initialize database (sql.js initialization is async)
   await initDatabase();
 
