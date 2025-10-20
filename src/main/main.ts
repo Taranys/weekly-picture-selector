@@ -15,11 +15,31 @@ import {
   unhidePhotosBySubdirectory,
   getHiddenPhotos,
   getHiddenPhotoCount,
+  // Face operations
+  getFacesByPhotoId,
+  getAllFaces,
+  updateFacePersonId,
+  getFaceCount,
+  // Person operations
+  insertPerson,
+  updatePerson,
+  deletePerson,
+  getAllPeople,
+  getPersonById,
+  getPhotosByPersonId,
+  getPhotosByPeople,
 } from './database';
 import { scanDirectory, getWeekNumber } from './scanner';
 import { generateThumbnails } from './thumbnail';
 import { exportFavorites, validateExportConfig, checkExportConflicts } from './exporter';
-import type { Photo, ExportConfig, Week } from '../shared/types';
+import {
+  loadModels,
+  detectFacesInPhoto,
+  detectFacesInPhotos,
+  clusterFaces,
+  areModelsLoaded,
+} from './faceDetection';
+import type { Photo, ExportConfig, Week, FaceDetectionSettings } from '../shared/types';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -56,9 +76,9 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
-  // Initialize database
-  initDatabase();
+app.whenReady().then(async () => {
+  // Initialize database (sql.js initialization is async)
+  await initDatabase();
 
   createWindow();
 
@@ -351,5 +371,174 @@ ipcMain.handle('get-hidden-photo-count', async () => {
   } catch (error) {
     console.error('Error getting hidden photo count:', error);
     return 0;
+  }
+});
+
+// Face Detection Operations (Phase 4)
+ipcMain.handle('load-face-models', async () => {
+  try {
+    let publicPath: string;
+
+    if (process.env.NODE_ENV === 'development') {
+      // In development, models are in the source public/ directory
+      // __dirname is dist/main/main/, so we need to go up 3 levels to reach project root
+      publicPath = path.join(__dirname, '../../../public');
+    } else {
+      // In production, models will be bundled with the app
+      publicPath = path.join(__dirname, '../../public');
+    }
+
+    console.log('[Main] Loading models from:', publicPath);
+    await loadModels(publicPath);
+    return { success: true };
+  } catch (error) {
+    console.error('Error loading face models:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+});
+
+ipcMain.handle('are-face-models-loaded', async () => {
+  return areModelsLoaded();
+});
+
+ipcMain.handle('detect-faces-in-photo', async (_event, photo: Photo, settings: FaceDetectionSettings) => {
+  try {
+    return await detectFacesInPhoto(photo, settings);
+  } catch (error) {
+    console.error('Error detecting faces in photo:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('detect-faces-in-photos', async (_event, photos: Photo[], settings: FaceDetectionSettings) => {
+  try {
+    if (!mainWindow) {
+      throw new Error('Main window not available');
+    }
+
+    const result = await detectFacesInPhotos(photos, settings, (progress) => {
+      mainWindow?.webContents.send('face-detection-progress', progress);
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error detecting faces in photos:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('get-faces-by-photo-id', async (_event, photoId: number) => {
+  try {
+    return getFacesByPhotoId(photoId);
+  } catch (error) {
+    console.error('Error getting faces by photo ID:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('get-all-faces', async () => {
+  try {
+    return getAllFaces();
+  } catch (error) {
+    console.error('Error getting all faces:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('get-face-count', async (_event, photoId: number) => {
+  try {
+    return getFaceCount(photoId);
+  } catch (error) {
+    console.error('Error getting face count:', error);
+    return 0;
+  }
+});
+
+ipcMain.handle('assign-face-to-person', async (_event, faceId: number, personId: number | null) => {
+  try {
+    return updateFacePersonId(faceId, personId);
+  } catch (error) {
+    console.error('Error assigning face to person:', error);
+    return false;
+  }
+});
+
+// Person Operations (Phase 4)
+ipcMain.handle('create-person', async (_event, name: string, representativeFaceId: number | null = null) => {
+  try {
+    const personId = insertPerson(name, representativeFaceId);
+    return getPersonById(personId);
+  } catch (error) {
+    console.error('Error creating person:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('update-person', async (_event, id: number, name: string, representativeFaceId: number | null = null) => {
+  try {
+    const success = updatePerson(id, name, representativeFaceId);
+    if (success) {
+      return getPersonById(id);
+    }
+    return null;
+  } catch (error) {
+    console.error('Error updating person:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('delete-person', async (_event, id: number) => {
+  try {
+    return deletePerson(id);
+  } catch (error) {
+    console.error('Error deleting person:', error);
+    return false;
+  }
+});
+
+ipcMain.handle('get-all-people', async () => {
+  try {
+    return getAllPeople();
+  } catch (error) {
+    console.error('Error getting all people:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('get-person-by-id', async (_event, id: number) => {
+  try {
+    return getPersonById(id);
+  } catch (error) {
+    console.error('Error getting person by ID:', error);
+    return null;
+  }
+});
+
+ipcMain.handle('get-photos-by-person-id', async (_event, personId: number) => {
+  try {
+    return getPhotosByPersonId(personId);
+  } catch (error) {
+    console.error('Error getting photos by person ID:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('get-photos-by-people', async (_event, personIds: number[], mode: 'any' | 'only' = 'any') => {
+  try {
+    return getPhotosByPeople(personIds, mode);
+  } catch (error) {
+    console.error('Error getting photos by people:', error);
+    return [];
+  }
+});
+
+// Face Clustering (Phase 4)
+ipcMain.handle('cluster-faces', async (_event, distanceThreshold: number = 0.6) => {
+  try {
+    const allFaces = getAllFaces();
+    return clusterFaces(allFaces, distanceThreshold);
+  } catch (error) {
+    console.error('Error clustering faces:', error);
+    return [];
   }
 });

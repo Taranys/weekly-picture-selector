@@ -6,10 +6,13 @@ import { Lightbox } from './components/Lightbox';
 import { FavoritesSummary } from './components/FavoritesSummary';
 import { SubdirectoryFilter } from './components/SubdirectoryFilter';
 import { HiddenItemsManager } from './components/HiddenItemsManager';
+import { FaceDetectionDialog } from './components/FaceDetectionDialog';
+import { FaceFilter } from './components/FaceFilter';
+import { PeopleTab } from './components/PeopleTab';
 import { usePhotos } from './hooks/usePhotos';
 import type { Week, Photo } from '../shared/types';
 
-type ViewMode = 'all' | 'favorites';
+type ViewMode = 'all' | 'favorites' | 'people';
 
 function App() {
   const {
@@ -28,6 +31,9 @@ function App() {
   const [selectedSubdirectory, setSelectedSubdirectory] = useState<string | null>(null);
   const [showHiddenManager, setShowHiddenManager] = useState(false);
   const [hiddenCount, setHiddenCount] = useState(0);
+  const [showFaceDetection, setShowFaceDetection] = useState(false);
+  const [selectedPeople, setSelectedPeople] = useState<number[]>([]);
+  const [faceFilterMode, setFaceFilterMode] = useState<'any' | 'only'>('any');
 
   // Group photos by week
   const weeks = useMemo(() => {
@@ -80,7 +86,7 @@ function App() {
     }
   }, [photos]);
 
-  // Filter photos by subdirectory and selected week
+  // Filter photos by subdirectory, selected week, and people
   const displayedPhotos = useMemo(() => {
     let filtered = photos;
 
@@ -91,11 +97,13 @@ function App() {
 
     // Filter by selected week
     if (selectedWeek) {
-      return filtered.filter(
+      filtered = filtered.filter(
         (p) => p.weekNumber === selectedWeek.weekNumber && p.year === selectedWeek.year
       );
     }
 
+    // Note: Face filtering will be applied on backend when implemented
+    // For now, we just return the filtered photos
     return filtered;
   }, [photos, selectedWeek, selectedSubdirectory]);
 
@@ -134,6 +142,31 @@ function App() {
     const count = await window.electronAPI.getHiddenPhotoCount();
     setHiddenCount(count);
   }, [refreshPhotos]);
+
+  // Handle face detection start
+  const handleStartFaceDetection = useCallback(async (settings: any) => {
+    try {
+      // Load models first if not already loaded
+      console.log('[Face Detection] Loading models...');
+      const loadResult = await window.electronAPI.loadFaceModels();
+
+      if (!loadResult.success) {
+        alert(`Failed to load face detection models:\n${loadResult.error || 'Unknown error'}`);
+        return;
+      }
+
+      console.log('[Face Detection] Models loaded, starting detection...');
+
+      // Start face detection
+      await window.electronAPI.detectFacesInPhotos(photos, settings);
+      setShowFaceDetection(false);
+
+      alert('Face detection complete! Go to the "People" tab to group similar faces.');
+    } catch (error) {
+      console.error('Error detecting faces:', error);
+      alert(`Error detecting faces:\n${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [photos]);
 
   // Handle lightbox navigation
   const lightboxPhotoIndex = useMemo(() => {
@@ -263,6 +296,24 @@ function App() {
                           )}
                         </div>
                       </button>
+                      <button
+                        onClick={() => {
+                          setViewMode('people');
+                          setSelectedWeek(null);
+                        }}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                          viewMode === 'people'
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                          <span>People</span>
+                        </div>
+                      </button>
                     </div>
 
                     {/* Filters and Actions */}
@@ -273,6 +324,24 @@ function App() {
                           onSelectSubdirectory={setSelectedSubdirectory}
                           onHideSubdirectory={handleHideSubdirectory}
                         />
+
+                        <FaceFilter
+                          selectedPeople={selectedPeople}
+                          onSelectPeople={setSelectedPeople}
+                          filterMode={faceFilterMode}
+                          onFilterModeChange={setFaceFilterMode}
+                        />
+
+                        <button
+                          onClick={() => setShowFaceDetection(true)}
+                          className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          <span>Detect Faces</span>
+                        </button>
 
                         {hiddenCount > 0 && (
                           <button
@@ -297,14 +366,15 @@ function App() {
               )}
 
               {/* View Content */}
-              {viewMode === 'all' ? (
+              {viewMode === 'all' && (
                 <PhotoGrid
                   photos={displayedPhotos}
                   onToggleFavorite={toggleFavorite}
                   onPhotoClick={setLightboxPhoto}
                   onHidePhoto={handleHidePhoto}
                 />
-              ) : (
+              )}
+              {viewMode === 'favorites' && (
                 <FavoritesSummary
                   weeks={weeks}
                   onPhotoClick={setLightboxPhoto}
@@ -313,6 +383,12 @@ function App() {
                     setViewMode('all');
                     setSelectedWeek(week);
                   }}
+                />
+              )}
+              {viewMode === 'people' && (
+                <PeopleTab
+                  photos={photos}
+                  onPhotoClick={setLightboxPhoto}
                 />
               )}
             </>
@@ -336,6 +412,15 @@ function App() {
         <HiddenItemsManager
           onClose={() => setShowHiddenManager(false)}
           onPhotosRestored={handlePhotosRestored}
+        />
+      )}
+
+      {/* Face Detection Dialog */}
+      {showFaceDetection && (
+        <FaceDetectionDialog
+          isOpen={showFaceDetection}
+          onClose={() => setShowFaceDetection(false)}
+          onStartDetection={handleStartFaceDetection}
         />
       )}
     </div>

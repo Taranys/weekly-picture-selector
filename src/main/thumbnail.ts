@@ -70,7 +70,19 @@ export async function generateThumbnail(
 
     return thumbnailPath;
   } catch (error) {
-    console.error(`Error generating thumbnail for ${photoPath}:`, error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isHeicError = photoPath.toLowerCase().endsWith('.heic') ||
+                        errorMessage.includes('heif') ||
+                        errorMessage.includes('libheif') ||
+                        errorMessage.includes('compression format');
+
+    if (isHeicError) {
+      console.warn(`⚠️  HEIC file skipped (libheif not fully configured): ${path.basename(photoPath)}`);
+      console.warn(`   To fix: brew install libheif && npm rebuild sharp`);
+    } else {
+      console.error(`❌ Error generating thumbnail for ${path.basename(photoPath)}:`, errorMessage);
+    }
+
     return null;
   }
 }
@@ -86,6 +98,8 @@ export async function generateThumbnails(
   const results = new Map<string, string>();
   const total = photoPaths.length;
   let processed = 0;
+  let heicSkipped = 0;
+  let otherErrors = 0;
 
   // Process in batches to avoid memory issues
   const BATCH_SIZE = 10;
@@ -95,6 +109,16 @@ export async function generateThumbnails(
       const thumbnailPath = await generateThumbnail(photoPath, size);
       processed++;
       onProgress?.(photoPath, processed, total);
+
+      // Track failures
+      if (!thumbnailPath) {
+        if (photoPath.toLowerCase().endsWith('.heic')) {
+          heicSkipped++;
+        } else {
+          otherErrors++;
+        }
+      }
+
       return { photoPath, thumbnailPath };
     });
 
@@ -104,6 +128,16 @@ export async function generateThumbnails(
         results.set(photoPath, thumbnailPath);
       }
     });
+  }
+
+  // Summary
+  console.log(`\n✅ Thumbnail generation complete:`);
+  console.log(`   - Success: ${results.size}/${total}`);
+  if (heicSkipped > 0) {
+    console.log(`   - HEIC skipped: ${heicSkipped} (run: brew install libheif && npm rebuild sharp)`);
+  }
+  if (otherErrors > 0) {
+    console.log(`   - Other errors: ${otherErrors}`);
   }
 
   return results;
