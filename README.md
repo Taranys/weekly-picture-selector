@@ -6,7 +6,7 @@ A desktop application designed to simplify the process of selecting your favorit
 
 Managing thousands of photos from a year can be overwhelming. This application helps you efficiently browse through your photo library organized by weeks, select 2-4 favorite photos per week, and export them into a well-organized folder structure.
 
-## ✨ Current Features (Phases 1-3 Complete ✅)
+## ✨ Current Features (Phases 1-4 Complete ✅)
 
 ### 📁 Photo Management
 - **Directory Scanning** - Recursive scanning with EXIF metadata extraction
@@ -22,7 +22,7 @@ Managing thousands of photos from a year can be overwhelming. This application h
 - **Favorites Summary** - Dedicated view with statistics dashboard and export preview
 
 ### 🎨 User Interface
-- **View Toggle** - Switch between "All Photos" and "Favorites" view
+- **View Toggle** - Switch between "All Photos", "Favorites", and "People" views
 - **Week Sidebar** - Navigate by week with:
   - Year separators
   - Date ranges (e.g., "Jan 1 - Jan 7")
@@ -63,6 +63,16 @@ Managing thousands of photos from a year can be overwhelming. This application h
 - **Hidden Items Manager** - View and restore hidden photos
 - **Bulk Operations** - Select and restore multiple hidden items at once
 
+### 👤 Facial Recognition (Phase 4)
+- **Face Detection** - Automatic face detection in all photos (100% local processing)
+- **Face Clustering** - Group similar faces together automatically
+- **People Management** - Label and identify people in your photos
+- **Face Count Badges** - Visual indicators showing number of faces per photo
+- **People Filter** - Filter photos by specific people with "any" or "only" modes
+- **People Tab** - Dedicated interface for managing identified people and face groups
+- **Privacy-First** - All face data stays on your device, never sent to cloud
+- **Worker Process** - Background face detection doesn't block the UI
+
 ### ⌨️ Keyboard Shortcuts
 - `Space` or `F` - Toggle favorite
 - `←` / `→` - Navigate photos in lightbox
@@ -79,11 +89,6 @@ Managing thousands of photos from a year can be overwhelming. This application h
 
 ## 🔮 Upcoming Features
 
-### Phase 4: Facial Recognition (Advanced)
-- Automatic face detection (100% local processing)
-- Face clustering and labeling
-- Filter photos by detected people
-
 ### Phase 5: Polish
 - Dark/light theme
 - Virtual scrolling for large collections
@@ -98,6 +103,7 @@ Managing thousands of photos from a year can be overwhelming. This application h
 - **Database**: SQLite via better-sqlite3 (local metadata storage)
 - **Image Processing**: Sharp 0.33 (high-performance thumbnails)
 - **EXIF Parsing**: exifr 7 (fast metadata extraction)
+- **Face Recognition**: face-api.js 0.22 + TensorFlow.js Node 4.22 (100% local processing)
 - **Testing**: Jest 30 + React Testing Library 16
 
 ### Why This Stack?
@@ -170,7 +176,7 @@ npm run package:win     # Windows (.exe)
 
 ## 📋 Project Status
 
-**Current Phase:** Phase 3 Enhanced Organization - ✅ **COMPLETE**
+**Current Phase:** Phase 4 Facial Recognition - ✅ **COMPLETE**
 
 ### ✅ Completed (Phase 1)
 - [x] Directory scanning with EXIF extraction
@@ -207,10 +213,26 @@ npm run package:win     # Windows (.exe)
 - [x] Bulk restore operations
 - [x] Database support for hidden photos
 
-### 📅 Next Up (Phase 4)
-- [ ] Automatic face detection
-- [ ] Face clustering and labeling
-- [ ] Filter photos by detected people
+### ✅ Completed (Phase 4)
+- [x] Face detection worker process with face-api.js
+- [x] Automatic face detection in photos (100% local)
+- [x] Face embedding generation for recognition
+- [x] Face clustering algorithm (DBSCAN-like)
+- [x] People management (create, update, delete)
+- [x] Face-to-person assignment
+- [x] People tab with face cluster visualization
+- [x] Face filter component (any/only modes)
+- [x] Face count badges on photos
+- [x] Face thumbnail extraction
+- [x] Database support for faces and people
+- [x] IPC handlers for all face operations
+- [x] Privacy-first architecture (all local processing)
+
+### 📅 Next Up (Phase 5)
+- [ ] Dark/light theme toggle
+- [ ] Virtual scrolling for large collections
+- [ ] Zoom in lightbox
+- [ ] Performance optimizations
 
 ## 🧪 Testing
 
