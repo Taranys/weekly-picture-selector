@@ -361,12 +361,20 @@ export function getFaceCount(photoId: number): number {
 
 // Person operations (Phase 4)
 export function insertPerson(name: string, representativeFaceId: number | null = null): number {
+  console.log(`[DB insertPerson] Inserting person "${name}" with face ${representativeFaceId}`);
   runQuery(`
     INSERT INTO people (name, representative_face_id)
     VALUES (?, ?)
   `, [name, representativeFaceId]);
 
   const row = execQueryOne(`SELECT last_insert_rowid() as id`);
+  console.log(`[DB insertPerson] last_insert_rowid query returned:`, row);
+
+  if (!row || !row.id) {
+    throw new Error('Failed to get person ID after insert');
+  }
+
+  console.log(`[DB insertPerson] Returning person ID: ${row.id}`);
   return row.id;
 }
 
@@ -402,6 +410,7 @@ export function getAllPeople(): Person[] {
 }
 
 export function getPersonById(id: number): Person | null {
+  console.log(`[DB getPersonById] Querying for person ID: ${id}`);
   const row = execQueryOne(`
     SELECT
       p.*,
@@ -412,7 +421,16 @@ export function getPersonById(id: number): Person | null {
     GROUP BY p.id
   `, [id]);
 
-  return row ? rowToPerson(row) : null;
+  console.log(`[DB getPersonById] Query returned:`, row);
+
+  if (!row) {
+    console.log(`[DB getPersonById] No row found for person ID ${id}`);
+    return null;
+  }
+
+  const person = rowToPerson(row);
+  console.log(`[DB getPersonById] Converted to person:`, person);
+  return person;
 }
 
 export function getPhotosByPersonId(personId: number): Photo[] {
@@ -500,5 +518,44 @@ function rowToPerson(row: any): Person {
     name: row.name,
     representativeFaceId: row.representative_face_id,
     photoCount: row.photo_count || 0,
+  };
+}
+
+// Clear all face and people data
+export function clearAllFacesAndPeople(): { facesDeleted: number; peopleDeleted: number } {
+  const facesCount = execQueryOne(`SELECT COUNT(*) as count FROM faces`);
+  const peopleCount = execQueryOne(`SELECT COUNT(*) as count FROM people`);
+
+  runQuery(`DELETE FROM faces`);
+  runQuery(`DELETE FROM people`);
+
+  return {
+    facesDeleted: facesCount.count,
+    peopleDeleted: peopleCount.count,
+  };
+}
+
+// Clear ALL database data (photos, faces, people) - used when selecting a new folder
+export function clearAllData(): { photosDeleted: number; facesDeleted: number; peopleDeleted: number } {
+  console.log('[Database] Clearing all data...');
+
+  const photosCount = execQueryOne(`SELECT COUNT(*) as count FROM photos`);
+  const facesCount = execQueryOne(`SELECT COUNT(*) as count FROM faces`);
+  const peopleCount = execQueryOne(`SELECT COUNT(*) as count FROM people`);
+
+  // Delete in order (child tables first due to foreign keys)
+  runQuery(`DELETE FROM faces`);
+  runQuery(`DELETE FROM people`);
+  runQuery(`DELETE FROM photos`);
+
+  // Reset auto-increment counters to start from 1 again
+  runQuery(`DELETE FROM sqlite_sequence WHERE name IN ('photos', 'faces', 'people')`);
+
+  console.log(`[Database] Cleared ${photosCount.count} photos, ${facesCount.count} faces, ${peopleCount.count} people and reset ID counters`);
+
+  return {
+    photosDeleted: photosCount.count,
+    facesDeleted: facesCount.count,
+    peopleDeleted: peopleCount.count,
   };
 }

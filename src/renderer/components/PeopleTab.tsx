@@ -23,6 +23,8 @@ export function PeopleTab({ photos, onPhotoClick }: PeopleTabProps) {
   const [labelInput, setLabelInput] = useState('');
   const [isClustering, setIsClustering] = useState(false);
   const [photoMap, setPhotoMap] = useState<Map<number, Photo>>(new Map());
+  const [faceThumbnails, setFaceThumbnails] = useState<Map<number, string>>(new Map());
+  const [autoClusterTriggered, setAutoClusterTriggered] = useState(false);
 
   useEffect(() => {
     // Create photo map for quick lookups
@@ -33,9 +35,87 @@ export function PeopleTab({ photos, onPhotoClick }: PeopleTabProps) {
     setPhotoMap(map);
   }, [photos]);
 
+  // Reset all state when photos array changes (new folder selected)
+  // We detect this by checking if the first photo's ID changes
+  const firstPhotoId = photos.length > 0 ? photos[0].id : null;
   useEffect(() => {
+    console.log('[PeopleTab] Photos changed, resetting state...');
+    setClusters([]);
+    setPeople([]);
+    setSelectedPerson(null);
+    setSelectedCluster(null);
+    setFaceThumbnails(new Map());
+    setAutoClusterTriggered(false);
+
+    // Reload people from database
     loadPeople();
-  }, []);
+  }, [firstPhotoId]);
+
+  // Automatically cluster faces when People tab opens
+  useEffect(() => {
+    const autoCluster = async () => {
+      // Only auto-cluster if:
+      // 1. Auto-clustering hasn't been triggered yet
+      // 2. Not currently clustering
+      // 3. No clusters exist yet
+      // 4. No people exist yet
+      if (!autoClusterTriggered && !isClustering && clusters.length === 0 && people.length === 0) {
+        console.log('[PeopleTab] Auto-clustering faces...');
+        setAutoClusterTriggered(true);
+
+        // Small delay to let the UI render
+        setTimeout(() => {
+          handleClusterFaces(false); // Don't show alerts during auto-clustering
+        }, 500);
+      }
+    };
+
+    autoCluster();
+  }, [autoClusterTriggered, isClustering, clusters.length, people.length]);
+
+  // Load face thumbnails when clusters change
+  useEffect(() => {
+    const loadFaceThumbnails = async () => {
+      console.log('[PeopleTab] Loading face thumbnails for', clusters.length, 'clusters and', people.length, 'people');
+      const thumbnails = new Map<number, string>();
+
+      // Load thumbnails for cluster sample faces
+      for (const cluster of clusters) {
+        try {
+          console.log(`[PeopleTab] Requesting thumbnail for cluster sample face ${cluster.sampleFaceId}`);
+          const thumbnail = await window.electronAPI.getFaceThumbnail(cluster.sampleFaceId);
+          if (thumbnail) {
+            console.log(`[PeopleTab] Received thumbnail for face ${cluster.sampleFaceId}`);
+            thumbnails.set(cluster.sampleFaceId, thumbnail);
+          } else {
+            console.log(`[PeopleTab] No thumbnail returned for face ${cluster.sampleFaceId}`);
+          }
+        } catch (error) {
+          console.error(`Error loading thumbnail for face ${cluster.sampleFaceId}:`, error);
+        }
+      }
+
+      // Load thumbnails for people representative faces
+      for (const person of people) {
+        if (person.representativeFaceId) {
+          try {
+            const thumbnail = await window.electronAPI.getFaceThumbnail(person.representativeFaceId);
+            if (thumbnail) {
+              thumbnails.set(person.representativeFaceId, thumbnail);
+            }
+          } catch (error) {
+            console.error(`Error loading thumbnail for face ${person.representativeFaceId}:`, error);
+          }
+        }
+      }
+
+      setFaceThumbnails(thumbnails);
+    };
+
+    if (clusters.length > 0 || people.length > 0) {
+      loadFaceThumbnails();
+    }
+  }, [clusters, people]);
 
   const loadPeople = async () => {
     try {
@@ -46,14 +126,16 @@ export function PeopleTab({ photos, onPhotoClick }: PeopleTabProps) {
     }
   };
 
-  const handleClusterFaces = async () => {
+  const handleClusterFaces = async (showAlerts = true) => {
     setIsClustering(true);
     try {
       // Check if there are any faces first
       const allFaces = await window.electronAPI.getAllFaces();
 
       if (allFaces.length === 0) {
-        alert('No faces detected yet!\n\nGo to "All Photos" view and click "Detect Faces" to scan your photos first.');
+        if (showAlerts) {
+          alert('No faces detected yet!\n\nGo to "All Photos" view and click "Detect Faces" to scan your photos first.');
+        }
         setIsClustering(false);
         return;
       }
@@ -74,12 +156,16 @@ export function PeopleTab({ photos, onPhotoClick }: PeopleTabProps) {
 
       setClusters(faceClusters);
 
-      if (faceClusters.length === 0) {
-        alert('No face groups found.\n\nThis usually means all detected faces are too different from each other to group together.');
+      if (faceClusters.length === 0 && showAlerts) {
+        console.log('[PeopleTab] No face groups found');
+      } else if (faceClusters.length > 0) {
+        console.log(`[PeopleTab] Successfully created ${faceClusters.length} face clusters`);
       }
     } catch (error) {
       console.error('Error clustering faces:', error);
-      alert('Error clustering faces: ' + (error instanceof Error ? error.message : String(error)));
+      if (showAlerts) {
+        alert('Error clustering faces: ' + (error instanceof Error ? error.message : String(error)));
+      }
     } finally {
       setIsClustering(false);
     }
@@ -112,9 +198,14 @@ export function PeopleTab({ photos, onPhotoClick }: PeopleTabProps) {
 
         // Update cluster
         await handleClusterFaces();
+
+        alert(`Successfully labeled "${person.name}"!`);
+      } else {
+        alert('Error: Could not create person. The face data may be outdated.');
       }
     } catch (error) {
       console.error('Error saving label:', error);
+      alert('Error saving label: ' + (error instanceof Error ? error.message : String(error)) + '\n\nThe face data may be outdated. Try clearing face data and detecting faces again.');
     }
   };
 
@@ -138,6 +229,40 @@ export function PeopleTab({ photos, onPhotoClick }: PeopleTabProps) {
     }
   };
 
+  const handleClearAllData = async () => {
+    const confirmed = confirm(
+      'Clear All Face Data?\n\n' +
+      'This will delete:\n' +
+      '• All detected faces\n' +
+      '• All identified people\n' +
+      '• All face groupings\n\n' +
+      'This is useful when you have rescanned your photos and the old face data is outdated.\n\n' +
+      'Your photos will not be affected. You can detect faces again after clearing.\n\n' +
+      'Continue?'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const result = await window.electronAPI.clearAllFacesAndPeople();
+      alert(
+        `Face data cleared successfully!\n\n` +
+        `Deleted:\n` +
+        `• ${result.facesDeleted} faces\n` +
+        `• ${result.peopleDeleted} people\n\n` +
+        `You can now detect faces again from the "All Photos" tab.`
+      );
+
+      // Clear local state
+      setClusters([]);
+      setPeople([]);
+      setFaceThumbnails(new Map());
+    } catch (error) {
+      console.error('Error clearing face data:', error);
+      alert('Error clearing face data: ' + (error instanceof Error ? error.message : String(error)));
+    }
+  };
+
   return (
     <div className="flex-1 overflow-hidden flex flex-col">
       {/* Header */}
@@ -149,25 +274,36 @@ export function PeopleTab({ photos, onPhotoClick }: PeopleTabProps) {
               Manage detected faces and identify people in your photos
             </p>
           </div>
-          <button
-            onClick={handleClusterFaces}
-            disabled={isClustering}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 flex items-center space-x-2"
-          >
-            {isClustering ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                <span>Clustering...</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span>Group Similar Faces</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleClearAllData}
+              className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center space-x-2"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>Clear Face Data</span>
+            </button>
+            <button
+              onClick={handleClusterFaces}
+              disabled={isClustering}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 flex items-center space-x-2"
+            >
+              {isClustering ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  <span>Clustering...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Group Similar Faces</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -189,10 +325,18 @@ export function PeopleTab({ photos, onPhotoClick }: PeopleTabProps) {
                   className="bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-colors p-4 cursor-pointer group"
                   onClick={() => handleViewPersonPhotos(person)}
                 >
-                  <div className="aspect-square bg-gray-200 rounded-lg mb-2 flex items-center justify-center">
-                    <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                  <div className="aspect-square bg-gray-200 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
+                    {person.representativeFaceId && faceThumbnails.has(person.representativeFaceId) ? (
+                      <img
+                        src={faceThumbnails.get(person.representativeFaceId)}
+                        alt={person.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    )}
                   </div>
                   <p className="font-medium text-gray-900 truncate" title={person.name}>
                     {person.name}
@@ -233,10 +377,18 @@ export function PeopleTab({ photos, onPhotoClick }: PeopleTabProps) {
                     className="bg-white rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-colors p-4 cursor-pointer"
                     onClick={() => handleLabelCluster(cluster)}
                   >
-                    <div className="aspect-square bg-gray-200 rounded-lg mb-2 flex items-center justify-center">
-                      <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                    <div className="aspect-square bg-gray-200 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
+                      {faceThumbnails.has(cluster.sampleFaceId) ? (
+                        <img
+                          src={faceThumbnails.get(cluster.sampleFaceId)}
+                          alt="Unknown Person"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      )}
                     </div>
                     <p className="font-medium text-gray-600 text-center">Unknown Person</p>
                     <p className="text-xs text-gray-600 text-center mt-1">

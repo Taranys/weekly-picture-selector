@@ -5,9 +5,10 @@ interface FaceDetectionDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onStartDetection: (settings: FaceDetectionSettings) => void;
+  autoStart?: boolean;
 }
 
-export function FaceDetectionDialog({ isOpen, onClose, onStartDetection }: FaceDetectionDialogProps) {
+export function FaceDetectionDialog({ isOpen, onClose, onStartDetection, autoStart = false }: FaceDetectionDialogProps) {
   const [settings, setSettings] = useState<FaceDetectionSettings>({
     enabled: true,
     sensitivity: 0.5,
@@ -47,6 +48,18 @@ export function FaceDetectionDialog({ isOpen, onClose, onStartDetection }: FaceD
     setProgress({ phase: 'loading_models', currentFile: 'Loading models...', processed: 0, total: 0, percentage: 0 });
     onStartDetection(settings);
   };
+
+  // Auto-start detection if autoStart is true
+  useEffect(() => {
+    if (isOpen && autoStart && !isDetecting && !result) {
+      console.log('[Face Detection Dialog] Auto-starting detection...');
+      // Small delay to let the dialog render first
+      const timer = setTimeout(() => {
+        handleStart();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, autoStart, isDetecting, result]);
 
   if (!isOpen) return null;
 

@@ -34,6 +34,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAllFaces: () => ipcRenderer.invoke('get-all-faces'),
   getFaceCount: (photoId: number) => ipcRenderer.invoke('get-face-count', photoId),
   assignFaceToPerson: (faceId: number, personId: number | null) => ipcRenderer.invoke('assign-face-to-person', faceId, personId),
+  getFaceThumbnail: (faceId: number) => ipcRenderer.invoke('get-face-thumbnail', faceId),
 
   // Person operations (Phase 4)
   createPerson: (name: string, representativeFaceId: number | null) => ipcRenderer.invoke('create-person', name, representativeFaceId),
@@ -46,6 +47,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Face clustering (Phase 4)
   clusterFaces: (distanceThreshold: number) => ipcRenderer.invoke('cluster-faces', distanceThreshold),
+
+  // Clear all faces and people data
+  clearAllFacesAndPeople: () => ipcRenderer.invoke('clear-all-faces-and-people'),
 
   // Event listeners for progress updates
   onScanProgress: (callback: (progress: any) => void) => {
@@ -89,6 +93,7 @@ declare global {
       getAllFaces: () => Promise<any[]>;
       getFaceCount: (photoId: number) => Promise<number>;
       assignFaceToPerson: (faceId: number, personId: number | null) => Promise<boolean>;
+      getFaceThumbnail: (faceId: number) => Promise<string | null>;
       // Person operations (Phase 4)
       createPerson: (name: string, representativeFaceId: number | null) => Promise<Person | null>;
       updatePerson: (id: number, name: string, representativeFaceId: number | null) => Promise<Person | null>;
@@ -99,6 +104,8 @@ declare global {
       getPhotosByPeople: (personIds: number[], mode: 'any' | 'only') => Promise<any[]>;
       // Face clustering (Phase 4)
       clusterFaces: (distanceThreshold: number) => Promise<Array<{ faceIds: number[]; averageDescriptor: number[] }>>;
+      // Clear all faces and people data
+      clearAllFacesAndPeople: () => Promise<{ facesDeleted: number; peopleDeleted: number }>;
       // Event listeners
       onScanProgress: (callback: (progress: any) => void) => void;
       onExportProgress: (callback: (progress: any) => void) => void;

@@ -1,13 +1,14 @@
 import { app, BrowserWindow, ipcMain, dialog, protocol } from 'electron';
 import path from 'path';
 import fs from 'fs';
+import sharp from 'sharp';
 import heicConvert from 'heic-convert';
 import {
   initDatabase,
   insertPhoto,
   getAllPhotos,
   toggleFavorite as dbToggleFavorite,
-  clearAllPhotos,
+  clearAllData,
   getUniqueSubdirectories,
   getPhotosBySubdirectory,
   getSubdirectoryStats,
@@ -30,6 +31,8 @@ import {
   getPersonById,
   getPhotosByPersonId,
   getPhotosByPeople,
+  // Cleanup operations
+  clearAllFacesAndPeople,
 } from './database';
 import { scanDirectory, getWeekNumber } from './scanner';
 import { generateThumbnails } from './thumbnail';
@@ -175,8 +178,9 @@ ipcMain.handle('scan-photos', async (_event, directoryPath: string) => {
   try {
     if (!mainWindow) return [];
 
-    // Clear existing photos from database
-    clearAllPhotos();
+    // Clear ALL existing data from database (photos, faces, people)
+    console.log('[Scan] Clearing all database data before scanning new folder...');
+    clearAllData();
 
     // Phase 1: Scan directory and extract EXIF
     mainWindow.webContents.send('scan-progress', {
@@ -434,6 +438,88 @@ ipcMain.handle('get-hidden-photo-count', async () => {
   }
 });
 
+// Generate face thumbnail from bounding box
+ipcMain.handle('get-face-thumbnail', async (_event, faceId: number) => {
+  try {
+    console.log(`[Face Thumbnail] Requesting thumbnail for face ${faceId}`);
+
+    // Get face data including bounding box and photo path
+    const faces = await getAllFaces();
+    const face = faces.find((f) => f.id === faceId);
+
+    if (!face) {
+      console.log(`[Face Thumbnail] Face ${faceId} not found in database`);
+      return null;
+    }
+
+    console.log(`[Face Thumbnail] Found face ${faceId}, photoId: ${face.photoId}, bbox:`, face.boundingBox);
+
+    // Get the photo
+    const photos = getAllPhotos();
+    const photo = photos.find((p) => p.id === face.photoId);
+
+    if (!photo) {
+      console.log(`[Face Thumbnail] Photo ${face.photoId} not found for face ${faceId}`);
+      return null;
+    }
+
+    console.log(`[Face Thumbnail] Found photo: ${photo.filename}`);
+
+    // Extract face region and create thumbnail
+    const { x, y, width, height } = face.boundingBox;
+
+    // Add padding around face (20% on each side)
+    const padding = Math.max(width, height) * 0.3;
+    const extractX = Math.max(0, Math.floor(x - padding));
+    const extractY = Math.max(0, Math.floor(y - padding));
+    const extractWidth = Math.floor(width + padding * 2);
+    const extractHeight = Math.floor(height + padding * 2);
+
+    // Check if this is a HEIC file
+    const isHeic = photo.path.toLowerCase().endsWith('.heic') || photo.path.toLowerCase().endsWith('.heif');
+
+    let imageBuffer: Buffer;
+
+    if (isHeic) {
+      // Convert HEIC to JPEG first
+      const inputBuffer = fs.readFileSync(photo.path);
+      const jpegBuffer = await heicConvert({
+        buffer: inputBuffer,
+        format: 'JPEG',
+        quality: 0.9,
+      });
+      imageBuffer = jpegBuffer;
+    } else {
+      // Read image file directly
+      imageBuffer = fs.readFileSync(photo.path);
+    }
+
+    // Extract face region and resize to thumbnail
+    const thumbnailBuffer = await sharp(imageBuffer)
+      .extract({
+        left: extractX,
+        top: extractY,
+        width: extractWidth,
+        height: extractHeight,
+      })
+      .resize(200, 200, {
+        fit: 'cover',
+        position: 'center',
+      })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+
+    // Convert to base64 data URL
+    const base64 = thumbnailBuffer.toString('base64');
+    const dataUrl = `data:image/jpeg;base64,${base64}`;
+    console.log(`[Face Thumbnail] Generated thumbnail for face ${faceId}, size: ${base64.length} bytes`);
+    return dataUrl;
+  } catch (error) {
+    console.error(`[Face Thumbnail] Error generating thumbnail for face ${faceId}:`, error);
+    return null;
+  }
+});
+
 // Face Detection Operations (Phase 4)
 ipcMain.handle('load-face-models', async () => {
   try {
@@ -526,8 +612,12 @@ ipcMain.handle('assign-face-to-person', async (_event, faceId: number, personId:
 // Person Operations (Phase 4)
 ipcMain.handle('create-person', async (_event, name: string, representativeFaceId: number | null = null) => {
   try {
+    console.log(`[Create Person] Creating person "${name}" with representative face ${representativeFaceId}`);
     const personId = insertPerson(name, representativeFaceId);
-    return getPersonById(personId);
+    console.log(`[Create Person] Inserted person with ID: ${personId}`);
+    const person = getPersonById(personId);
+    console.log(`[Create Person] Retrieved person:`, person);
+    return person;
   } catch (error) {
     console.error('Error creating person:', error);
     throw error;
@@ -600,5 +690,18 @@ ipcMain.handle('cluster-faces', async (_event, distanceThreshold: number = 0.6) 
   } catch (error) {
     console.error('Error clustering faces:', error);
     return [];
+  }
+});
+
+// Clear all face and people data
+ipcMain.handle('clear-all-faces-and-people', async () => {
+  try {
+    console.log('[Main] Clearing all faces and people data...');
+    const result = clearAllFacesAndPeople();
+    console.log(`[Main] Cleared ${result.facesDeleted} faces and ${result.peopleDeleted} people`);
+    return result;
+  } catch (error) {
+    console.error('Error clearing faces and people:', error);
+    throw error;
   }
 });

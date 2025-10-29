@@ -34,6 +34,7 @@ function App() {
   const [showFaceDetection, setShowFaceDetection] = useState(false);
   const [selectedPeople, setSelectedPeople] = useState<number[]>([]);
   const [faceFilterMode, setFaceFilterMode] = useState<'any' | 'only'>('any');
+  const [autoDetectionTriggered, setAutoDetectionTriggered] = useState(false);
 
   // Group photos by week
   const weeks = useMemo(() => {
@@ -161,12 +162,34 @@ function App() {
       await window.electronAPI.detectFacesInPhotos(photos, settings);
       setShowFaceDetection(false);
 
-      alert('Face detection complete! Go to the "People" tab to group similar faces.');
+      // Automatically switch to People tab after detection completes
+      console.log('[Face Detection] Complete! Switching to People tab...');
+      setViewMode('people');
     } catch (error) {
       console.error('Error detecting faces:', error);
       alert(`Error detecting faces:\n${error instanceof Error ? error.message : String(error)}`);
     }
   }, [photos]);
+
+  // Automatically trigger face detection after photos are loaded
+  useEffect(() => {
+    if (photos.length > 0 && !autoDetectionTriggered && !loading && scanProgress?.phase === 'complete') {
+      console.log('[Auto Face Detection] Triggering automatic face detection for', photos.length, 'photos');
+      setAutoDetectionTriggered(true);
+
+      // Delay slightly to ensure UI is ready
+      setTimeout(() => {
+        setShowFaceDetection(true);
+      }, 500);
+    }
+  }, [photos.length, autoDetectionTriggered, loading, scanProgress]);
+
+  // Reset auto detection flag when directory changes
+  useEffect(() => {
+    if (selectedDirectory) {
+      setAutoDetectionTriggered(false);
+    }
+  }, [selectedDirectory]);
 
   // Handle lightbox navigation
   const lightboxPhotoIndex = useMemo(() => {
@@ -421,6 +444,7 @@ function App() {
           isOpen={showFaceDetection}
           onClose={() => setShowFaceDetection(false)}
           onStartDetection={handleStartFaceDetection}
+          autoStart={autoDetectionTriggered}
         />
       )}
     </div>
