@@ -11,9 +11,9 @@ interface FaceDetectionDialogProps {
 export function FaceDetectionDialog({ isOpen, onClose, onStartDetection, autoStart = false }: FaceDetectionDialogProps) {
   const [settings, setSettings] = useState<FaceDetectionSettings>({
     enabled: true,
-    sensitivity: 0.5,
-    minFaceSize: 50,
-    quality: 'balanced',
+    sensitivity: 0.3, // Lower = more sensitive, detects more faces (was 0.5)
+    minFaceSize: 30, // Smaller = detect smaller faces (was 50)
+    quality: 'accurate', // Higher quality for better detection (was 'balanced')
     backgroundProcessing: false,
   });
 
@@ -127,7 +127,7 @@ export function FaceDetectionDialog({ isOpen, onClose, onStartDetection, autoSta
                   </label>
                   <input
                     type="range"
-                    min="0.3"
+                    min="0.15"
                     max="0.9"
                     step="0.05"
                     value={settings.sensitivity}
@@ -135,8 +135,8 @@ export function FaceDetectionDialog({ isOpen, onClose, onStartDetection, autoSta
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                   />
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>Very sensitive (more false positives)</span>
                     <span>Less sensitive (fewer faces)</span>
-                    <span>More sensitive (more faces)</span>
                   </div>
                 </div>
 
