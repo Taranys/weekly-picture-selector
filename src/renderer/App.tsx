@@ -87,13 +87,48 @@ function App() {
     }
   }, [photos]);
 
+  // Filtered photos by people (using backend filtering)
+  const [peopleFilteredPhotos, setPeopleFilteredPhotos] = useState<Photo[]>([]);
+  const [isLoadingPeopleFilter, setIsLoadingPeopleFilter] = useState(false);
+
+  // Load photos filtered by selected people
+  useEffect(() => {
+    const loadPeopleFilteredPhotos = async () => {
+      if (selectedPeople.length === 0) {
+        setPeopleFilteredPhotos([]);
+        return;
+      }
+
+      setIsLoadingPeopleFilter(true);
+      try {
+        console.log('[People Filter] Loading photos for people:', selectedPeople, 'mode:', faceFilterMode);
+        const filteredPhotos = await window.electronAPI.getPhotosByPeople(selectedPeople, faceFilterMode);
+        console.log('[People Filter] Loaded', filteredPhotos.length, 'photos');
+        setPeopleFilteredPhotos(filteredPhotos);
+      } catch (error) {
+        console.error('Error loading photos by people:', error);
+        setPeopleFilteredPhotos([]);
+      } finally {
+        setIsLoadingPeopleFilter(false);
+      }
+    };
+
+    loadPeopleFilteredPhotos();
+  }, [selectedPeople, faceFilterMode, photos.length]);
+
   // Filter photos by subdirectory, selected week, and people
   const displayedPhotos = useMemo(() => {
     let filtered = photos;
 
+    // Filter by people first (if any selected)
+    if (selectedPeople.length > 0 && peopleFilteredPhotos.length > 0) {
+      const peoplePhotoIds = new Set(peopleFilteredPhotos.map((p) => p.id));
+      filtered = photos.filter((p) => peoplePhotoIds.has(p.id));
+    }
+
     // Filter by subdirectory
     if (selectedSubdirectory !== null) {
-      filtered = photos.filter((p) => p.subdirectory === selectedSubdirectory);
+      filtered = filtered.filter((p) => p.subdirectory === selectedSubdirectory);
     }
 
     // Filter by selected week
@@ -103,10 +138,8 @@ function App() {
       );
     }
 
-    // Note: Face filtering will be applied on backend when implemented
-    // For now, we just return the filtered photos
     return filtered;
-  }, [photos, selectedWeek, selectedSubdirectory]);
+  }, [photos, selectedWeek, selectedSubdirectory, selectedPeople, peopleFilteredPhotos]);
 
   // Handle hiding a photo
   const handleHidePhoto = useCallback(async (photoId: number) => {

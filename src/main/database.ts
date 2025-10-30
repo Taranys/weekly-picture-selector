@@ -344,7 +344,9 @@ export function getAllFaces(): Face[] {
 }
 
 export function updateFacePersonId(faceId: number, personId: number | null): boolean {
+  console.log(`[DB updateFacePersonId] Assigning face ${faceId} to person ${personId}`);
   runQuery(`UPDATE faces SET person_id = ? WHERE id = ?`, [personId, faceId]);
+  console.log(`[DB updateFacePersonId] Successfully assigned face ${faceId} to person ${personId}`);
   return true;
 }
 
@@ -362,20 +364,32 @@ export function getFaceCount(photoId: number): number {
 // Person operations (Phase 4)
 export function insertPerson(name: string, representativeFaceId: number | null = null): number {
   console.log(`[DB insertPerson] Inserting person "${name}" with face ${representativeFaceId}`);
-  runQuery(`
+
+  const database = getDatabase();
+
+  // Insert the person
+  database.run(`
     INSERT INTO people (name, representative_face_id)
     VALUES (?, ?)
   `, [name, representativeFaceId]);
 
-  const row = execQueryOne(`SELECT last_insert_rowid() as id`);
-  console.log(`[DB insertPerson] last_insert_rowid query returned:`, row);
+  // Get the last insert rowid from the database object directly
+  // This is more reliable with sql.js than using SELECT last_insert_rowid()
+  const result = database.exec(`SELECT last_insert_rowid() as id`);
 
-  if (!row || !row.id) {
+  console.log(`[DB insertPerson] Exec result:`, result);
+
+  if (!result || result.length === 0 || !result[0].values || result[0].values.length === 0) {
     throw new Error('Failed to get person ID after insert');
   }
 
-  console.log(`[DB insertPerson] Returning person ID: ${row.id}`);
-  return row.id;
+  const personId = result[0].values[0][0] as number;
+  console.log(`[DB insertPerson] Got person ID: ${personId}`);
+
+  // Save database after successful insert
+  saveDatabase();
+
+  return personId;
 }
 
 export function updatePerson(id: number, name: string, representativeFaceId: number | null = null): boolean {
@@ -445,16 +459,23 @@ export function getPhotosByPersonId(personId: number): Photo[] {
 }
 
 export function getPhotosByPeople(personIds: number[], mode: 'any' | 'only' = 'any'): Photo[] {
+  console.log(`[DB getPhotosByPeople] Querying for people:`, personIds, 'mode:', mode);
+
   if (mode === 'any') {
     // Photos with any of these people
     const placeholders = personIds.map(() => '?').join(',');
-    const rows = execQuery(`
+    const sql = `
       SELECT DISTINCT p.*
       FROM photos p
       INNER JOIN faces f ON f.photo_id = p.id
       WHERE f.person_id IN (${placeholders}) AND p.is_hidden = 0
       ORDER BY p.capture_date ASC
-    `, personIds);
+    `;
+    console.log(`[DB getPhotosByPeople] SQL:`, sql);
+    console.log(`[DB getPhotosByPeople] Params:`, personIds);
+
+    const rows = execQuery(sql, personIds);
+    console.log(`[DB getPhotosByPeople] Found ${rows.length} photos`);
     return rows.map(rowToPhoto);
   } else {
     // Photos with ONLY these people (no other people)
