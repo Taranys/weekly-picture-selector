@@ -142,7 +142,7 @@ export function FavoritesSummary({
 
           <div className="space-y-4">
             {weeksWithFavorites.map((week, index) => {
-              const folderName = `S${String(index + 1).padStart(2, '0')}`;
+              const folderName = `S${String(week.weekNumber).padStart(2, '0')}`;
               const favPhotos = week.photos.filter((p) => p.isFavorite);
 
               return (
@@ -204,7 +204,7 @@ export function FavoritesSummary({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              onToggleFavorite(photo.id);
+                              onToggleFavorite(String(photo.id));
                             }}
                             className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                             title="Remove from favorites"

@@ -51,7 +51,7 @@ export async function exportFavorites(
     // Export each week
     for (let i = 0; i < weeksToExport.length; i++) {
       const week = weeksToExport[i];
-      const folderName = generateFolderName(i + 1, config);
+      const folderName = generateFolderName(week.weekNumber, config);
       const folderPath = path.join(config.destinationPath, folderName);
 
       progressCallback({
@@ -269,7 +269,8 @@ export function checkExportConflicts(
   const weeksToExport = weeks.filter((w) => w.favoriteCount > 0);
 
   for (let i = 0; i < weeksToExport.length; i++) {
-    const folderName = generateFolderName(i + 1, config);
+    const week = weeksToExport[i];
+    const folderName = generateFolderName(week.weekNumber, config);
     const folderPath = path.join(config.destinationPath, folderName);
 
     if (fs.existsSync(folderPath)) {
